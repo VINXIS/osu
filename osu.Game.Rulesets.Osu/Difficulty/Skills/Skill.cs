@@ -1,3 +1,4 @@
+﻿using System.Runtime.Serialization;
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
@@ -18,7 +19,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
         protected const double SINGLE_SPACING_THRESHOLD = 125;
         protected const double STREAM_SPACING_THRESHOLD = 110;
         
-        public double timeMultiplier(OsuDifficultyHitObject current) => Math.Min(1, 1.0 - Math.Tanh((current.StrainTime - 200.0) / 100.0));
+        public double timeMultiplier(OsuDifficultyHitObject current) => Math.Min(1, 1.0 - Math.Tanh((current.StrainTime - 150.0) / 100.0));
 
         /// <summary>
         /// Strain values are multiplied by this number for the given skill. Used to balance the value of different skills between each other.
