@@ -1,5 +1,5 @@
-﻿// Copyright (c) 2007-2018 ppy Pty Ltd <contact@ppy.sh>.
-// Licensed under the MIT Licence - https://raw.githubusercontent.com/ppy/osu/master/LICENCE
+﻿// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
+// See the LICENCE file in the repository root for full licence text.
 
 using System;
 using System.Linq;
@@ -29,8 +29,11 @@ namespace osu.Game.Tests.Visual
         {
             Dependencies = new DependencyContainer(base.CreateChildDependencies(parent));
 
-            Dependencies.CacheAs<BindableBeatmap>(beatmap);
-            Dependencies.CacheAs<IBindableBeatmap>(beatmap);
+            // This is the earliest we can get OsuGameBase, which is used by the dummy working beatmap to find textures
+            beatmap.Default = new DummyWorkingBeatmap(Dependencies.Get<OsuGameBase>());
+
+            Dependencies.CacheAs<Bindable<WorkingBeatmap>>(beatmap);
+            Dependencies.CacheAs<IBindable<WorkingBeatmap>>(beatmap);
 
             Dependencies.CacheAs(Ruleset);
             Dependencies.CacheAs<IBindable<RulesetInfo>>(Ruleset);
@@ -55,11 +58,7 @@ namespace osu.Game.Tests.Visual
         {
             base.Dispose(isDisposing);
 
-            if (beatmap != null)
-            {
-                beatmap.Disabled = true;
-                beatmap.Value.Track.Stop();
-            }
+            beatmap?.Value.Track.Stop();
 
             if (localStorage.IsValueCreated)
             {
