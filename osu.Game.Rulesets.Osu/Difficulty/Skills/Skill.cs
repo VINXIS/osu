@@ -1,5 +1,6 @@
-﻿// Copyright (c) 2007-2018 ppy Pty Ltd <contact@ppy.sh>.
-// Licensed under the MIT Licence - https://raw.githubusercontent.com/ppy/osu/master/LICENCE
+﻿using System.Runtime.Serialization;
+// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
+// See the LICENCE file in the repository root for full licence text.
 
 using System;
 using System.Collections.Generic;
@@ -15,6 +16,11 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
     /// </summary>
     public abstract class Skill
     {
+        protected const double SINGLE_SPACING_THRESHOLD = 125;
+        protected const double STREAM_SPACING_THRESHOLD = 110;
+        
+        public double timeMultiplier(OsuDifficultyHitObject current) => Math.Min(1, 1.0 - Math.Tanh((current.StrainTime - 200.0) / 100.0));
+
         /// <summary>
         /// Strain values are multiplied by this number for the given skill. Used to balance the value of different skills between each other.
         /// </summary>
@@ -34,6 +40,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
         private double currentStrain = 1; // We keep track of the strain level at all times throughout the beatmap.
         private double currentSectionPeak = 1; // We also keep track of the peak strain level in the current section.
         private readonly List<double> strainPeaks = new List<double>();
+        private readonly List<Tuple<OsuDifficultyHitObject, double>> objPeaks = new List<Tuple<OsuDifficultyHitObject, double>>();
 
         /// <summary>
         /// Process an <see cref="OsuDifficultyHitObject"/> and update current strain values accordingly.
@@ -43,6 +50,8 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
             currentStrain *= strainDecay(current.DeltaTime);
             if (!(current.BaseObject is Spinner))
                 currentStrain += StrainValueOf(current) * SkillMultiplier;
+
+            objPeaks.Add(new Tuple<OsuDifficultyHitObject, double>(current, currentStrain));
 
             currentSectionPeak = Math.Max(currentStrain, currentSectionPeak);
 
@@ -76,6 +85,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
         public double DifficultyValue()
         {
             strainPeaks.Sort((a, b) => b.CompareTo(a)); // Sort from highest to lowest strain.
+            objPeaks.Sort((a, b) => a.Item2.CompareTo(b.Item2)); // Sort from highest to lowest strain.
 
             double difficulty = 0;
             double weight = 1;
@@ -86,6 +96,13 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                 difficulty += strain * weight;
                 weight *= 0.9;
             }
+
+            /*foreach  (Tuple<OsuDifficultyHitObject, double> obj in objPeaks) 
+            {
+                Console.WriteLine("---");
+                Console.WriteLine("Object placed: " + obj.Item1.BaseObject.StartTime);
+                Console.WriteLine("Strain value: " + obj.Item2);
+            }*/
 
             return difficulty;
         }
