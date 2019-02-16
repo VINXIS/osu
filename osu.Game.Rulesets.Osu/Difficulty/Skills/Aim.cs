@@ -1,4 +1,4 @@
-﻿// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
+// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
 using System;
@@ -33,7 +33,8 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                         Math.Max(Previous[0].JumpDistance - scale, 0)
                         * Math.Pow(Math.Sin(current.Angle.Value - angle_bonus_begin), 2)
                         * Math.Max(current.JumpDistance - scale, 0));
-                    result = 1.5 * timeMultiplier(current) * applyDiminishingExp(Math.Max(0, angleBonus)) / Math.Max(timing_threshold, Previous[0].StrainTime);
+                    result = 1.5 * Math.Min(1, 1.0 - Math.Tanh((current.StrainTime - 150.0) / 100.0)) *
+					applyDiminishingExp(Math.Max(0, angleBonus)) / Math.Max(timing_threshold, Previous[0].StrainTime);
                 }
             }
 
