@@ -102,7 +102,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                 double timeScale = time_scale_factor / (time_scale_factor + (timeDiff + prevtimeDiff) / 2.0);
 
                 // Final values
-                double patternResult = stackScale * pattern_variety_scale * timeScale * angleScale * Math.Pow(totalVelChange * totalDistChange, 0.5);
+                double patternResult = timeMultiplier(current) * stackScale * pattern_variety_scale * timeScale * angleScale * Math.Sqrt(totalVelChange * totalDistChange);
                 double timeResult = Math.Max(timeMultiplier(current), timeMultiplier(Previous[0])) * Math.Pow(totalTimeChange, time_variety_scale);
 
                 /*Console.WriteLine("---");
