@@ -154,7 +154,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                     File.AppendAllText(@"A:\Users\oykxf\Documents\osu-tools\objects.txt", str);
                 }*/
 
-                return (timeMultiplier(current) * patternResult + timeResult + sliderChange) / Math.Min(current.StrainTime, Previous[0].StrainTime);            
+                return (patternResult + timeResult + sliderChange) / Math.Min(current.StrainTime, Previous[0].StrainTime);            
             } else return 0;
         }
     }
