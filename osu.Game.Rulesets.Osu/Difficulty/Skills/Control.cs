@@ -68,7 +68,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                         angleStdDev = Math.Sqrt(Math.Pow(current.Angle.Value - angleAvg, 2.0) + Math.Pow(Previous[0].Angle.Value - angleAvg, 2.0));
                         maxStdDev = Math.Sqrt(2 * Math.Pow(Math.PI / 3.0, 2.0) + Math.Pow(Math.PI - Math.PI / 3.0, 2.0));
                     }
-                    angleScale = Math.Pow(1.0 - angleStdDev / maxStdDev, 2.0);
+                    angleScale = Math.Pow(angleStdDev / maxStdDev, 2.0);
                 }
 
                 // Slider calc
@@ -142,14 +142,11 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                 using (var writer = new StringWriter())
                 {
                     ConsoleRenderer.RenderDocumentToText(document, new TextRenderTarget(writer));
-
                     var str = writer.GetStringBuilder().ToString();
-
                     var lines = str.Split('\n');
                     for (int i = 0; i < lines.Length; i++)
                         lines[i] = lines[i].TrimEnd();
                     str = string.Join('\n'.ToString(), lines);
-
                     Console.Write(str);
                     File.AppendAllText(@"A:\Users\oykxf\Documents\osu-tools\objects.txt", str);
                 }*/
