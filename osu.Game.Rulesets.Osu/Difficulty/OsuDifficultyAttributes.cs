@@ -1,5 +1,5 @@
-﻿// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
-// See the LICENCE file in the repository root for full licence text.
+﻿// Copyright (c) 2007-2018 ppy Pty Ltd <contact@ppy.sh>.
+// Licensed under the MIT Licence - https://raw.githubusercontent.com/ppy/osu/master/LICENCE
 
 using osu.Game.Rulesets.Difficulty;
 using osu.Game.Rulesets.Mods;
@@ -10,7 +10,6 @@ namespace osu.Game.Rulesets.Osu.Difficulty
     {
         public double AimStrain;
         public double SpeedStrain;
-        public double ControlStrain;
         public double ApproachRate;
         public double OverallDifficulty;
         public int MaxCombo;

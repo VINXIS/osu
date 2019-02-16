@@ -1,5 +1,5 @@
-﻿// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
-// See the LICENCE file in the repository root for full licence text.
+﻿// Copyright (c) 2007-2018 ppy Pty Ltd <contact@ppy.sh>.
+// Licensed under the MIT Licence - https://raw.githubusercontent.com/ppy/osu/master/LICENCE
 
 using System;
 using System.Linq;
@@ -40,22 +40,14 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Preprocessing
         /// </summary>
         public double StrainTime { get; private set; }
 
-        /// <summary>
-        /// Angle the player has to take to hit this <see cref="OsuDifficultyHitObject"/>.
-        /// Calculated as the angle between the circles (current-2, current-1, current).
-        /// </summary>
-        public double? Angle { get; private set; }
-
-        private readonly OsuHitObject lastLastObject;
         private readonly OsuHitObject lastObject;
         private readonly double timeRate;
 
         /// <summary>
         /// Initializes the object calculating extra data required for difficulty calculation.
         /// </summary>
-        public OsuDifficultyHitObject(OsuHitObject lastLastObject, OsuHitObject lastObject, OsuHitObject currentObject, double timeRate)
+        public OsuDifficultyHitObject(OsuHitObject currentObject, OsuHitObject lastObject, double timeRate)
         {
-            this.lastLastObject = lastLastObject;
             this.lastObject = lastObject;
             this.timeRate = timeRate;
 
@@ -76,30 +68,20 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Preprocessing
                 scalingFactor *= 1 + smallCircleBonus;
             }
 
-            if (lastObject is Slider lastSlider)
+            Vector2 lastCursorPosition = lastObject.StackedPosition;
+
+            var lastSlider = lastObject as Slider;
+            if (lastSlider != null)
             {
                 computeSliderCursorPosition(lastSlider);
+                lastCursorPosition = lastSlider.LazyEndPosition ?? lastCursorPosition;
+
                 TravelDistance = lastSlider.LazyTravelDistance * scalingFactor;
             }
-
-            Vector2 lastCursorPosition = getEndCursorPosition(lastObject);
 
             // Don't need to jump to reach spinners
             if (!(BaseObject is Spinner))
                 JumpDistance = (BaseObject.StackedPosition * scalingFactor - lastCursorPosition * scalingFactor).Length;
-
-            if (lastLastObject != null)
-            {
-                Vector2 lastLastCursorPosition = getEndCursorPosition(lastLastObject);
-
-                Vector2 v1 = lastLastCursorPosition - lastObject.StackedPosition;
-                Vector2 v2 = BaseObject.StackedPosition - lastCursorPosition;
-
-                float dot = Vector2.Dot(v1, v2);
-                float det = v1.X * v2.Y - v1.Y * v2.X;
-
-                Angle = Math.Abs(Math.Atan2(det, dot));
-            }
         }
 
         private void setTimingValues()
@@ -119,8 +101,8 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Preprocessing
             float approxFollowCircleRadius = (float)(slider.Radius * 3);
             var computeVertex = new Action<double>(t =>
             {
-                double progress = (t - slider.StartTime) / slider.SpanDuration;
-                if (progress % 2 >= 1)
+                double progress = ((int)t - (int)slider.StartTime) / (float)(int)slider.SpanDuration;
+                if (progress % 2 > 1)
                     progress = 1 - progress % 1;
                 else
                     progress = progress % 1;
@@ -143,20 +125,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Preprocessing
             var scoringTimes = slider.NestedHitObjects.Skip(1).Select(t => t.StartTime);
             foreach (var time in scoringTimes)
                 computeVertex(time);
-        }
-
-        private Vector2 getEndCursorPosition(OsuHitObject hitObject)
-        {
-            Vector2 pos = hitObject.StackedPosition;
-
-            var slider = hitObject as Slider;
-            if (slider != null)
-            {
-                computeSliderCursorPosition(slider);
-                pos = slider.LazyEndPosition ?? pos;
-            }
-
-            return pos;
+            computeVertex(slider.EndTime);
         }
     }
 }

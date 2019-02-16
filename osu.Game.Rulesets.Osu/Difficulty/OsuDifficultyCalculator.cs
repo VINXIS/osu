@@ -1,5 +1,5 @@
-﻿// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
-// See the LICENCE file in the repository root for full licence text.
+﻿// Copyright (c) 2007-2018 ppy Pty Ltd <contact@ppy.sh>.
+// Licensed under the MIT Licence - https://raw.githubusercontent.com/ppy/osu/master/LICENCE
 
 using System;
 using System.Linq;
@@ -16,7 +16,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
     public class OsuDifficultyCalculator : DifficultyCalculator
     {
         private const int section_length = 400;
-        private const double difficulty_multiplier = 0.06;
+        private const double difficulty_multiplier = 0.0675;
 
         public OsuDifficultyCalculator(Ruleset ruleset, WorkingBeatmap beatmap)
             : base(ruleset, beatmap)
@@ -32,8 +32,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             Skill[] skills =
             {
                 new Aim(),
-                new Speed(),
-                new Control()
+                new Speed()
             };
 
             double sectionLength = section_length * timeRate;
@@ -58,18 +57,9 @@ namespace osu.Game.Rulesets.Osu.Difficulty
                     s.Process(h);
             }
 
-            // The peak strain will not be saved for the last section in the above loop
-            foreach (Skill s in skills)
-                s.SaveCurrentPeak();
-
             double aimRating = Math.Sqrt(skills[0].DifficultyValue()) * difficulty_multiplier;
             double speedRating = Math.Sqrt(skills[1].DifficultyValue()) * difficulty_multiplier;
-            double controlRating = Math.Sqrt(skills[2].DifficultyValue()) * difficulty_multiplier;
-            double starRating =
-                    aimRating + 
-                    speedRating + 
-                    controlRating +
-                    Math.Abs(aimRating - speedRating) / 2.0;
+            double starRating = aimRating + speedRating + Math.Abs(aimRating - speedRating) / 2;
 
             // Todo: These int casts are temporary to achieve 1:1 results with osu!stable, and should be removed in the future
             double hitWindowGreat = (int)(beatmap.HitObjects.First().HitWindows.Great / 2) / timeRate;
@@ -83,7 +73,6 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             {
                 AimStrain = aimRating,
                 SpeedStrain = speedRating,
-                ControlStrain = controlRating,
                 ApproachRate = preempt > 1200 ? (1800 - preempt) / 120 : (1200 - preempt) / 150 + 5,
                 OverallDifficulty = (80 - hitWindowGreat) / 6,
                 MaxCombo = maxCombo
