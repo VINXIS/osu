@@ -87,12 +87,15 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
 
                 double timeAvg = (current.DeltaTime + Previous[0].DeltaTime) / 2.0;
                 double prevTimeAvg = (Previous[0].DeltaTime + Previous[1].DeltaTime) / 2.0;
-                
+
                 double currTimeChange = timeAvg != 0 ? timeDiff / timeAvg : 0;
-                currTimeChange = Math.Pow(Math.Sin(3.0 * Math.PI * currTimeChange / 2.0), 2.0); 
                 double prevTimeChange = prevTimeAvg != 0 ? prevtimeDiff / prevTimeAvg : 0;
-                prevTimeChange = Math.Pow(Math.Sin(3.0 * Math.PI * prevTimeChange / 2.0), 2.0); 
-                double totalTimeChange = Math.Sqrt(currTimeChange * prevTimeChange);
+
+                // Unorthodox rhythm gives higher values
+                currTimeChange = 2.0 * Math.Exp(-1.5 * currTimeChange) * Math.Pow(Math.Sin(4.0 * Math.PI / (currTimeChange - 2.0)), 2.0);
+                prevTimeChange = 2.0 * Math.Exp(-1.5 * prevTimeChange) * Math.Pow(Math.Sin(4.0 * Math.PI / (prevTimeChange - 2.0)), 2.0);
+
+                double totalTimeChange = Math.Max(currTimeChange, prevTimeChange);
 
                 // Apply dec. multipliers to values for non-constant rhythm/stacks
                 double stackScale = Math.Min(1.0, Math.Min(Math.Pow((calculateDistance(current)) / 100, 2.0), Math.Pow((calculateDistance(Previous[0])) / 100, 2.0)));
