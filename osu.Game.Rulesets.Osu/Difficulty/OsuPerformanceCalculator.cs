@@ -55,7 +55,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
                 return 0;
 
             // Custom multipliers for NoFail and SpunOut.
-            double multiplier = 1.12f; // This is being adjusted to keep the final pp value scaled around what it used to be when changing things
+            double multiplier = 1.625f; // This is being adjusted to keep the final pp value scaled around what it used to be when changing things
 
             if (mods.Any(m => m is OsuModNoFail))
                 multiplier *= 0.90f;
@@ -65,11 +65,13 @@ namespace osu.Game.Rulesets.Osu.Difficulty
 
             double aimValue = computeAimValue();
             double speedValue = computeSpeedValue();
+            double controlValue = computeControlValue();
             double accuracyValue = computeAccuracyValue();
             double totalValue =
                 Math.Pow(
                     Math.Pow(aimValue, 1.1f) +
                     Math.Pow(speedValue, 1.1f) +
+                    Math.Pow(controlValue, 1.1f) +
                     Math.Pow(accuracyValue, 1.1f), 1.0f / 1.1f
                 ) * multiplier;
 
@@ -77,6 +79,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             {
                 categoryRatings.Add("Aim", aimValue);
                 categoryRatings.Add("Speed", speedValue);
+                categoryRatings.Add("Control", controlValue);
                 categoryRatings.Add("Accuracy", accuracyValue);
                 categoryRatings.Add("OD", Attributes.OverallDifficulty);
                 categoryRatings.Add("AR", Attributes.ApproachRate);
@@ -168,6 +171,38 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             speedValue *= 0.96f + Math.Pow(Attributes.OverallDifficulty, 2) / 1600;
 
             return speedValue;
+        }
+
+        private double computeControlValue()
+        {
+            double controlValue = Math.Pow(5.0f * Math.Max(1.0f, Attributes.ControlStrain / 0.0675f) - 4.0f, 3.0f) / 100000.0f;
+
+            if (mods.Any(m => m is OsuModHidden))
+                controlValue *= 1.0f + 0.04f * (12.0f - Attributes.ApproachRate);
+
+            // Longer maps are worth more
+            double lengthBonus = 0.95f + 0.4f * Math.Min(1.0f, totalHits / 2000.0f) +
+                (totalHits > 2000 ? Math.Log10(totalHits / 2000.0f) * 0.5f : 0.0f);
+
+            controlValue *= lengthBonus;
+
+            // Penalize misses exponentially. This mainly fixes tag4 maps and the likes until a per-hitobject solution is available
+            controlValue *= Math.Pow(0.97f, countMiss);
+
+            // Combo scaling
+            if (beatmapMaxCombo > 0)
+                controlValue *= Math.Min(Math.Pow(scoreMaxCombo, 0.8f) / Math.Pow(beatmapMaxCombo, 0.8f), 1.0f);
+
+            double approachRateFactor = 1.0f;
+            if (Attributes.ApproachRate > 10.33f)
+                approachRateFactor += 0.3f * (Attributes.ApproachRate - 10.33f);
+            
+            // Scale the control value with accuracy _slightly_
+            controlValue *= 0.5f + accuracy / 2.0f;
+            // It is important to also consider accuracy difficulty when doing that
+            controlValue *= 0.98f + Math.Pow(Attributes.OverallDifficulty, 2) / 2500;
+
+            return controlValue;
         }
 
         private double computeAccuracyValue()

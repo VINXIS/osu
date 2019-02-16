@@ -14,7 +14,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
         private const double angle_bonus_begin = Math.PI / 3;
         private const double timing_threshold = 107;
 
-        protected override double SkillMultiplier => 26.25;
+        protected override double SkillMultiplier => 24.5;
         protected override double StrainDecayBase => 0.15;
 
         protected override double StrainValueOf(OsuDifficultyHitObject current)
@@ -33,7 +33,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                         Math.Max(Previous[0].JumpDistance - scale, 0)
                         * Math.Pow(Math.Sin(current.Angle.Value - angle_bonus_begin), 2)
                         * Math.Max(current.JumpDistance - scale, 0));
-                    result = 1.5 * applyDiminishingExp(Math.Max(0, angleBonus)) / Math.Max(timing_threshold, Previous[0].StrainTime);
+                    result = 1.5 * timeMultiplier(current) * applyDiminishingExp(Math.Max(0, angleBonus)) / Math.Max(timing_threshold, Previous[0].StrainTime);
                 }
             }
 
