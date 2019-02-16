@@ -71,6 +71,23 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                     angleScale = Math.Pow(angleStdDev / maxStdDev, 2.0);
                 }
 
+                // Time calc
+                double timeDiff = Math.Abs(current.DeltaTime - Previous[0].DeltaTime);
+                double prevtimeDiff = Math.Abs(Previous[0].DeltaTime - Previous[1].DeltaTime);
+
+                double timeAvg = (current.DeltaTime + Previous[0].DeltaTime) / 2.0;
+                double prevTimeAvg = (Previous[0].DeltaTime + Previous[1].DeltaTime) / 2.0;
+                
+                double currTimeChange = timeAvg != 0 ? timeDiff / timeAvg : 0;
+                double prevTimeChange = prevTimeAvg != 0 ? prevtimeDiff / prevTimeAvg : 0;
+
+                // Unorthodox rhythm gives higher values
+                currTimeChange = 2.0 * Math.Exp(-1.5 * currTimeChange) * Math.Pow(Math.Sin(4.0 * Math.PI / (currTimeChange - 2.0)), 2.0);
+                prevTimeChange = 2.0 * Math.Exp(-1.5 * prevTimeChange) * Math.Pow(Math.Sin(4.0 * Math.PI / (prevTimeChange - 2.0)), 2.0);
+                
+                double totalTimeChange = Math.Max(currTimeChange, prevTimeChange);
+
+
                 // Slider calc
                 double sliderChange = 0;
 
@@ -80,22 +97,6 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                     double sliderAvg = (currentSlider.Velocity + previousSlider.Velocity) / 2.0;
                     sliderChange = sliderAvg != 0 ? 1.5 * sliderDiff / sliderAvg : 0;
                 }
-
-                // Time calc
-                double timeDiff = Math.Abs(current.DeltaTime - Previous[0].DeltaTime);
-                double prevtimeDiff = Math.Abs(Previous[0].DeltaTime - Previous[1].DeltaTime);
-
-                double timeAvg = (current.DeltaTime + Previous[0].DeltaTime) / 2.0;
-                double prevTimeAvg = (Previous[0].DeltaTime + Previous[1].DeltaTime) / 2.0;
-
-                double currTimeChange = timeAvg != 0 ? timeDiff / timeAvg : 0;
-                double prevTimeChange = prevTimeAvg != 0 ? prevtimeDiff / prevTimeAvg : 0;
-
-                // Unorthodox rhythm gives higher values
-                currTimeChange = 2.0 * Math.Exp(-1.5 * currTimeChange) * Math.Pow(Math.Sin(4.0 * Math.PI / (currTimeChange - 2.0)), 2.0);
-                prevTimeChange = 2.0 * Math.Exp(-1.5 * prevTimeChange) * Math.Pow(Math.Sin(4.0 * Math.PI / (prevTimeChange - 2.0)), 2.0);
-
-                double totalTimeChange = Math.Max(currTimeChange, prevTimeChange);
 
                 // Apply dec. multipliers to values for non-constant rhythm/stacks
                 double stackScale = Math.Min(1.0, Math.Min(Math.Pow((calculateDistance(current)) / 100, 2.0), Math.Pow((calculateDistance(Previous[0])) / 100, 2.0)));
@@ -114,6 +115,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                 Console.WriteLine("currTimeChange: " + currTimeChange);
                 Console.WriteLine("prevTimeChange: "+ prevTimeChange);
                 Console.WriteLine("totalTimeChange: " + totalTimeChange);
+                Console.WriteLine("timeResult: " + timeResult);
                 Console.WriteLine("stackScale: " + stackScale);
                 Console.WriteLine("pattern_variety_scale: " + pattern_variety_scale);
                 Console.WriteLine("timeScale: " + timeScale);
@@ -145,11 +147,14 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                 using (var writer = new StringWriter())
                 {
                     ConsoleRenderer.RenderDocumentToText(document, new TextRenderTarget(writer));
+
                     var str = writer.GetStringBuilder().ToString();
+
                     var lines = str.Split('\n');
                     for (int i = 0; i < lines.Length; i++)
                         lines[i] = lines[i].TrimEnd();
                     str = string.Join('\n'.ToString(), lines);
+
                     Console.Write(str);
                     File.AppendAllText(@"A:\Users\oykxf\Documents\osu-tools\objects.txt", str);
                 }*/
