@@ -85,7 +85,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                 currTimeChange = sinusoid(currTimeChange);
                 prevTimeChange = sinusoid(prevTimeChange);
 				
-                double totalTimeChange = Math.Max(currTimeChange, prevTimeChange);
+                double totalTimeChange = Math.Abs(currTimeChange - prevTimeChange);
 
 
                 // Slider calc
