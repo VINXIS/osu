@@ -14,11 +14,11 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
     public class Control : Skill
     {
         protected override double SkillMultiplier => 5000;
-        protected override double StrainDecayBase => 0.35;
-        private const double time_scale_factor = 50;
-        private const double pattern_variety_scale = 10.0;
+        protected override double StrainDecayBase => 0.3;
+        private const double time_scale_factor = 50.0;
+        private const double pattern_variety_scale = 8.0;
         private const double time_variety_scale = 0.8;
-        private const double weight = 0.7;
+        private const double weight = 0.6;
         protected override double StrainValueOf(OsuDifficultyHitObject current)
         {
             double calculateDistance(OsuDifficultyHitObject obj) => obj.JumpDistance + obj.TravelDistance;
@@ -62,12 +62,12 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                     {
                         double angleAvg = (current.Angle.Value + Previous[0].Angle.Value + Previous[1].Angle.Value) / 3.0;
                         angleStdDev = Math.Sqrt((Math.Pow(current.Angle.Value - angleAvg, 2.0) + Math.Pow(Previous[0].Angle.Value - angleAvg, 2.0) + Math.Pow(Previous[1].Angle.Value - angleAvg, 2.0)) / 2.0);
-                        maxStdDev = Math.Sqrt((2 * Math.Pow(Math.PI / 3.0, 2.0) + Math.Pow(Math.PI - Math.PI / 3.0, 2.0)) / 2.0);
+                        maxStdDev = Math.Sqrt((2.0 * Math.Pow(Math.PI / 3.0, 2.0) + Math.Pow(Math.PI - Math.PI / 3.0, 2.0)) / 2.0);
                     } else
                     {
                         double angleAvg = (current.Angle.Value + Previous[0].Angle.Value) / 2.0;
                         angleStdDev = Math.Sqrt(Math.Pow(current.Angle.Value - angleAvg, 2.0) + Math.Pow(Previous[0].Angle.Value - angleAvg, 2.0));
-                        maxStdDev = Math.Sqrt(2 * Math.Pow(Math.PI / 3.0, 2.0) + Math.Pow(Math.PI - Math.PI / 3.0, 2.0));
+                        maxStdDev = Math.Sqrt(2.0 * Math.Pow(Math.PI / 3.0, 2.0) + Math.Pow(Math.PI - Math.PI / 3.0, 2.0));
                     }
                     angleScale = Math.Pow(angleStdDev / maxStdDev, 2.0);
                 }
@@ -89,7 +89,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                 double totalTimeChange = Math.Abs(currTimeChange - prevTimeChange);
 
                 // Apply dec. multipliers to values for non-constant rhythm/stacks
-                double stackScale = Math.Min(1.0, Math.Min(Math.Pow((calculateDistance(current)) / 100, 2.0), Math.Pow((calculateDistance(Previous[0])) / 100, 2.0)));
+                double stackScale = Math.Min(1.0, Math.Min(Math.Pow((calculateDistance(current)) / 100.0, 2.0), Math.Pow((calculateDistance(Previous[0])) / 100.0, 2.0)));
                 double timeScale = time_scale_factor / (time_scale_factor + (timeDiff + prevtimeDiff) / 2.0);
 
                 // Final values
