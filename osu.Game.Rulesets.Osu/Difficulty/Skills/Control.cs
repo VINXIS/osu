@@ -37,7 +37,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
 
                 double currVelChange = avgVel != 0 ? diffVel / avgVel : 0;
                 double prevVelChange = prevAvgVel != 0 ? prevDiffVel / prevAvgVel : 0;
-                double totalVelChange = currVelChange * prevVelChange;
+                double totalVelChange = Math.Sqrt(currVelChange * prevVelChange);
 
                 // Distance calc
                 double distDiff = Math.Abs(calculateDistance(current) - calculateDistance(Previous[0]));
@@ -48,7 +48,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
 
                 double currDistChange = avgDist != 0 ? distDiff / avgDist : 0;
                 double prevDistChange = prevAvgDist != 0 ? prevDistDiff / prevAvgDist : 0;
-                double totalDistChange = currDistChange * prevDistChange;
+                double totalDistChange = Math.Sqrt(currDistChange * prevDistChange);
 
                 // Angle calc
                 double angleScale = 0;
