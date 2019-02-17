@@ -18,6 +18,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
         private const double time_scale_factor = 50;
         private const double pattern_variety_scale = 8.0;
         private const double time_variety_scale = 0.8;
+		private const double weight = 0.6;
         protected override double StrainValueOf(OsuDifficultyHitObject current)
         {
             double calculateDistance(OsuDifficultyHitObject obj) => obj.JumpDistance + obj.TravelDistance;
@@ -159,7 +160,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                     File.AppendAllText(@"A:\Users\oykxf\Documents\osu-tools\objects.txt", str);
                 }*/
 
-                return (patternResult + timeResult + sliderChange) / Math.Min(current.StrainTime, Previous[0].StrainTime);            
+                return (weight * patternResult + (1.0 - weight) * timeResult + sliderChange) / Math.Min(current.StrainTime, Previous[0].StrainTime);
             } else return 0;
         }
     }
