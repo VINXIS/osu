@@ -82,9 +82,9 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                 double prevTimeChange = prevTimeAvg != 0 ? prevtimeDiff / prevTimeAvg : 0;
 
                 // Unorthodox rhythm gives higher values
-                currTimeChange = 2.0 * Math.Exp(-1.5 * currTimeChange) * Math.Pow(Math.Sin(4.0 * Math.PI / (currTimeChange - 2.0)), 2.0);
-                prevTimeChange = 2.0 * Math.Exp(-1.5 * prevTimeChange) * Math.Pow(Math.Sin(4.0 * Math.PI / (prevTimeChange - 2.0)), 2.0);
-                
+                currTimeChange = sinusoid(currTimeChange);
+                prevTimeChange = sinusoid(prevTimeChange);
+				
                 double totalTimeChange = Math.Max(currTimeChange, prevTimeChange);
 
 
