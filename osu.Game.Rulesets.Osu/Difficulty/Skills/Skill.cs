@@ -19,7 +19,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
         protected const double SINGLE_SPACING_THRESHOLD = 125;
         protected const double STREAM_SPACING_THRESHOLD = 110;
         
-        public double timeMultiplier(OsuDifficultyHitObject current) => 1.0 - Math.Tanh((current.StrainTime - 150.0) / 100.0);
+        public double timeMultiplier(OsuDifficultyHitObject current) => 1.0 - Math.Tanh((current.StrainTime - 150.0) / 50.0);
 
 		public double sinusoid(double inputNumber)
         {
