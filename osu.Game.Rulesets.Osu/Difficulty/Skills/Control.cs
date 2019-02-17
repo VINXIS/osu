@@ -69,7 +69,8 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                         angleStdDev = Math.Sqrt(Math.Pow(current.Angle.Value - angleAvg, 2.0) + Math.Pow(Previous[0].Angle.Value - angleAvg, 2.0));
                         maxStdDev = Math.Sqrt(2.0 * Math.Pow(Math.PI / 3.0, 2.0) + Math.Pow(Math.PI - Math.PI / 3.0, 2.0));
                     }
-                    angleScale = Math.Pow(angleStdDev / maxStdDev, 2.0);
+                    angleScale = Math.Pow(1.0 - angleStdDev / maxStdDev, 2.0);
+                    angleScale = 1.0 - 0.7 * Math.Pow(2.0 * angleScale - 1.1, 2.0);
                 }
 
                 // Time calc
