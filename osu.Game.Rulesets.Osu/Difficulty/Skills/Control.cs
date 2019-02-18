@@ -89,11 +89,22 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
 				
                 double totalTimeChange = Math.Abs(currTimeChange - prevTimeChange);
 
+                // Slider calc
+                double sliderChange = 0;
+
+                if (current.BaseObject is Slider currentSlider && Previous[0].BaseObject is Slider previousSlider)
+                {
+                    double sliderDiff = Math.Abs(currentSlider.Velocity - previousSlider.Velocity);
+                    double sliderAvg = (currentSlider.Velocity + previousSlider.Velocity) / 2.0;
+                    sliderChange = sliderAvg != 0 ? 1.5 * sliderDiff / sliderAvg : 0;
+                }
+
                 // Apply dec. multipliers to values for non-constant rhythm/stacks
                 double stackScale = Math.Min(1.0, Math.Min(Math.Pow((calculateDistance(current)) / 100.0, 2.0), Math.Pow((calculateDistance(Previous[0])) / 100.0, 2.0)));
                 double timeScale = time_scale_factor / (time_scale_factor + (timeDiff + prevtimeDiff) / 2.0);
 
                 // Final values
+                double sliderResult = (1.0 - timeScale) * sliderChange;
                 double patternResult = pattern_variety_scale * timeMultiplier(current) * stackScale * timeScale * angleScale * Math.Sqrt(totalVelChange * totalDistChange);
                 double timeResult = Math.Max(timeMultiplier(current), timeMultiplier(Previous[0])) * Math.Pow(totalTimeChange, time_variety_scale);
 
@@ -155,7 +166,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                     File.AppendAllText(@"A:\Users\oykxf\Documents\osu-tools\objects.txt", str);
                 }*/
 
-                return (weight * patternResult + (1.0 - weight) * timeResult) / Math.Min(current.StrainTime, Previous[0].StrainTime);            
+                return (weight * patternResult + (1.0 - weight) * timeResult + sliderResult) / Math.Min(current.StrainTime, Previous[0].StrainTime);            
             } else return 0;
         }
     }

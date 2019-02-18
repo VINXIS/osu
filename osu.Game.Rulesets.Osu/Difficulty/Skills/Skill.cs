@@ -118,12 +118,12 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                 weight *= 0.9;
             }
 
-            foreach  (Tuple<OsuDifficultyHitObject, double> obj in objPeaks) 
+            /*foreach  (Tuple<OsuDifficultyHitObject, double> obj in objPeaks) 
             {
                 Console.WriteLine("---");
                 Console.WriteLine("Object placed: " + obj.Item1.BaseObject.StartTime);
                 Console.WriteLine("Strain value: " + obj.Item2);
-            }
+            }*/
 
             return difficulty;
         }
