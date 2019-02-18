@@ -112,7 +112,10 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                 Console.WriteLine("Object placed: " + current.BaseObject.StartTime);
                 Console.WriteLine("totalVelChange: " + totalVelChange);
                 Console.WriteLine("totalDistChange: " + totalDistChange);
+                Console.WriteLine("pattern_variety_scale: " + pattern_variety_scale);
+                Console.WriteLine("timeMultiplier(current): " + timeMultiplier(current));
                 Console.WriteLine("stackScale: " + stackScale);
+                Console.WriteLine("timeScale: " + timeScale);
                 Console.WriteLine("angleScale: " + angleScale);
                 Console.WriteLine("patternResult: " + patternResult);
                 Console.WriteLine("timeDiff: " + timeDiff);
@@ -124,47 +127,11 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                 Console.WriteLine("totalTimeChange: " + totalTimeChange);
                 Console.WriteLine("timeResult: " + timeResult);
                 Console.WriteLine("stackScale: " + stackScale);
-                Console.WriteLine("pattern_variety_scale: " + pattern_variety_scale);
-                Console.WriteLine("timeScale: " + timeScale);
                 Console.WriteLine("angleScale: " + angleScale);
                 Console.WriteLine("totalVelChange: " + totalVelChange);
                 Console.WriteLine("totalDistChange: " + totalDistChange);
                 Console.WriteLine("patternResult: " + patternResult);
                 Console.WriteLine("timeResult: " + timeResult);*/
-
-                /*var document = new Document(
-                    new Span("---"),
-                    '\n',
-                    new Span("Object placed".PadRight(15) + $": {current.BaseObject.StartTime}"),
-                    '\n',
-                    new Span("Cursor Velocity Change".PadRight(15) + $": {totalVelChange}"),
-                    '\n',
-                    new Span("Distance Change".PadRight(15) + $": {totalDistChange}"),
-                    '\n',
-                    new Span("Angle Change".PadRight(15) + $": {angleStdDev}"),
-                    '\n',
-                    new Span("Time Change".PadRight(15) + $": {totalTimeChange}"),
-                    '\n',
-                    new Span("Slider Change".PadRight(15) + $": {sliderChange}"),
-                    '\n',
-                    new Span("Total Control value".PadRight(15) + $": {timeMultiplier(current) * (stackMultiplier * Math.Pow(totalVelChange * totalDistChange * angleStdDev, 0.25)) / Math.Min(current.StrainTime, Previous[0].StrainTime) + Math.Sqrt(totalTimeChange) / Math.Max(current.StrainTime, Previous[0].StrainTime) + sliderChange / Math.Min(current.StrainTime, Previous[0].StrainTime)}"),
-                    '\n',
-                    '\n'
-                );
-                using (var writer = new StringWriter())
-                {
-                    ConsoleRenderer.RenderDocumentToText(document, new TextRenderTarget(writer));
-
-                    var str = writer.GetStringBuilder().ToString();
-
-                    var lines = str.Split('\n');
-                    for (int i = 0; i < lines.Length; i++)
-                        lines[i] = lines[i].TrimEnd();
-                    str = string.Join('\n'.ToString(), lines);
-
-                    Console.Write(str);
-                    File.AppendAllText(@"A:\Users\oykxf\Documents\osu-tools\objects.txt", str);
-                }*/
 
                 return (weight * patternResult + (1.0 - weight) * timeResult + sliderResult) / Math.Min(current.StrainTime, Previous[0].StrainTime);            
             } else return 0;

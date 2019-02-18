@@ -15,7 +15,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
         private const double pi_over_4 = Math.PI / 4;
         private const double pi_over_2 = Math.PI / 2;
 
-        protected override double SkillMultiplier => 1400;
+        protected override double SkillMultiplier => 700;
         protected override double StrainDecayBase => 0.3;
 
         private const double min_speed_bonus = 75; // ~200BPM
