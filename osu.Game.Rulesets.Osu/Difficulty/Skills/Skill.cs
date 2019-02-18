@@ -19,7 +19,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
         protected const double SINGLE_SPACING_THRESHOLD = 125;
         protected const double STREAM_SPACING_THRESHOLD = 110;
         
-        public double timeMultiplier(OsuDifficultyHitObject current) => 1.0 - Math.Tanh((current.StrainTime - 100.0) / 100.0);
+        public double timeMultiplier(OsuDifficultyHitObject current) => 1.0 - Math.Tanh((current.StrainTime - 100.0) / 50.0);
 
 		public double sinusoid(double inputNumber)
         {
@@ -118,12 +118,12 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                 weight *= 0.9;
             }
 
-            /*foreach  (Tuple<OsuDifficultyHitObject, double> obj in objPeaks) 
+            foreach  (Tuple<OsuDifficultyHitObject, double> obj in objPeaks) 
             {
                 Console.WriteLine("---");
                 Console.WriteLine("Object placed: " + obj.Item1.BaseObject.StartTime);
                 Console.WriteLine("Strain value: " + obj.Item2);
-            }*/
+            }
 
             return difficulty;
         }

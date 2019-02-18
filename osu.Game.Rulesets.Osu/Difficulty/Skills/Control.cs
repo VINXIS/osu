@@ -26,9 +26,9 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
             if (Previous.Count > 1) 
             {
                 // Cursor velocity calc
-                double currCursorVel = calculateDistance(current) / current.DeltaTime;
-                double prevCursorVel = calculateDistance(Previous[0]) / Previous[0].DeltaTime;
-                double prevprevCursorVel = calculateDistance(Previous[1]) / Previous[1].DeltaTime;
+                double currCursorVel = calculateDistance(current) / current.StrainTime;
+                double prevCursorVel = calculateDistance(Previous[0]) / Previous[0].StrainTime;
+                double prevprevCursorVel = calculateDistance(Previous[1]) / Previous[1].StrainTime;
 
                 double diffVel = Math.Abs(currCursorVel - prevCursorVel);
                 double prevDiffVel = Math.Abs(prevCursorVel - prevprevCursorVel);
@@ -74,11 +74,11 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                 }
 
                 // Time calc
-                double timeDiff = Math.Abs(current.DeltaTime - Previous[0].DeltaTime);
-                double prevtimeDiff = Math.Abs(Previous[0].DeltaTime - Previous[1].DeltaTime);
+                double timeDiff = Math.Abs(current.StrainTime - Previous[0].StrainTime);
+                double prevtimeDiff = Math.Abs(Previous[0].StrainTime - Previous[1].StrainTime);
 
-                double timeAvg = (current.DeltaTime + Previous[0].DeltaTime) / 2.0;
-                double prevTimeAvg = (Previous[0].DeltaTime + Previous[1].DeltaTime) / 2.0;
+                double timeAvg = (current.StrainTime + Previous[0].StrainTime) / 2.0;
+                double prevTimeAvg = (Previous[0].StrainTime + Previous[1].StrainTime) / 2.0;
                 
                 double currTimeChange = timeAvg != 0 ? timeDiff / timeAvg : 0;
                 double prevTimeChange = prevTimeAvg != 0 ? prevtimeDiff / prevTimeAvg : 0;
