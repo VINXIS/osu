@@ -18,7 +18,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
         private const double time_scale_factor = 20.0;
         private const double pattern_variety_scale = 8.0;
         private const double time_variety_scale = 0.8;
-        private const double weight = 0.6;
+        private const double weight = 0.375;
         protected override double StrainValueOf(OsuDifficultyHitObject current)
         {
             double calculateDistance(OsuDifficultyHitObject obj) => obj.JumpDistance + obj.TravelDistance;
