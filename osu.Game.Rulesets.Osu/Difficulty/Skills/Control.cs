@@ -9,7 +9,7 @@ using osu.Game.Rulesets.Osu.Objects;
 namespace osu.Game.Rulesets.Osu.Difficulty.Skills
 {
     /// <summary>
-    /// Represents the skill required to stay in control of your movement and tapping with respect to inconsistent spacing and rhythms.
+    /// Represents the skill required to adjust your movement and tapping to varying spacing and rhythms in short periods of time.
     /// </summary>
     public class Control : Skill
     {
