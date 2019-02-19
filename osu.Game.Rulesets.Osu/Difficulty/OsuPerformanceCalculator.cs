@@ -175,7 +175,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
 
         private double computeControlValue()
         {
-            double controlValue = Math.Pow(5.0f * Math.Max(1.0f, Attributes.ControlStrain / 0.0675f) - 4.0f, 3.0f) / 100000.0f;
+            double controlValue = Math.Pow(5.0f * Math.Max(1.0f, Attributes.ControlStrain / 0.0675f) - 4.0f, 3.875f) / 10000000.0f;
 
             if (mods.Any(m => m is OsuModHidden))
                 controlValue *= 1.0f + 0.04f * (12.0f - Attributes.ApproachRate);
@@ -200,7 +200,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             // Scale the control value with accuracy harshly
             controlValue *= Math.Pow(accuracy, 2.0f);
             // It is important to also consider accuracy difficulty when doing that
-            controlValue *= 0.98f + Math.Pow(Attributes.OverallDifficulty, 2) / 500;
+            controlValue *= 0.9f + Math.Pow(Attributes.OverallDifficulty, 2) / 250;
 
             return controlValue;
         }
