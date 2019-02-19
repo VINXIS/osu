@@ -104,7 +104,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                 double timeScale = time_scale_factor / (time_scale_factor + (timeDiff + prevtimeDiff) / 2.0);
 
                 // Final values
-                double sliderResult = (1.0 - timeScale) * sliderChange;
+                double sliderResult = timeMultiplier(current) * (1.0 - timeScale) * sliderChange;
                 double patternResult = pattern_variety_scale * timeMultiplier(current) * stackScale * timeScale * angleScale * Math.Sqrt(totalVelChange * totalDistChange);
                 double timeResult = Math.Max(timeMultiplier(current), timeMultiplier(Previous[0])) * Math.Pow(totalTimeChange, time_variety_scale);
 
