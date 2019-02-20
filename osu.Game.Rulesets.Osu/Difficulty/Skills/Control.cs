@@ -29,7 +29,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
 
             double calculateDistance(OsuDifficultyHitObject obj) => obj.JumpDistance + obj.TravelDistance;
             double angleTransform(double angle) => Math.Pow((Math.Sin(3.0 * angle / 2.0 + Math.PI) + 3.0) / 4.0, 2.5);
-            double rhythmStep(double interval) => Math.Ceiling(2.0 * interval) / 2.0;
+            double rhythmStep(double interval) => Math.Round(2.0 * interval) / 2.0;
 
             if (Previous.Count > 1) 
             {
