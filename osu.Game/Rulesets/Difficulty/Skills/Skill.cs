@@ -19,28 +19,8 @@ namespace osu.Game.Rulesets.Difficulty.Skills
         /// </summary>
         public IList<double> StrainPeaks => strainPeaks;
 
-        public double timeMultiplier(DifficultyHitObject current) => 0.5 - Math.Tanh((current.DeltaTime - 100.0) / 50.0) / 2.0;
-
-		public double sinusoid(double inputNumber)
-        {
-            double ePower, piMultiplier, offset;
-            double changeValue = 2.0 / 3.0;
-            if (inputNumber < changeValue)
-            {
-                ePower = -1.5;
-                piMultiplier = 4.0;
-                offset = -2.0;
-            } else
-            {
-                ePower = -4.0 / 3.0;
-                piMultiplier = 3.0;
-                offset = -2.0 - 1.0 / 6.0;
-            }
-
-            double outputValue = 2.0 * Math.Exp(ePower * inputNumber) * Math.Pow(Math.Sin((piMultiplier * Math.PI) / (inputNumber + offset)), 2.0);
-
-            return outputValue;
-        }
+        public double timeMultiplier(DifficultyHitObject current) => 0.5 - Math.Tanh((current.DeltaTime - 100.0) / 100.0) / 2.0;
+		
 		
         /// <summary>
         /// Strain values are multiplied by this number for the given skill. Used to balance the value of different skills between each other.

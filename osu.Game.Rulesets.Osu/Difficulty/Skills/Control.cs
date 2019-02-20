@@ -28,7 +28,8 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
             var osuCurrent = (OsuDifficultyHitObject)current;
 
             double calculateDistance(OsuDifficultyHitObject obj) => obj.JumpDistance + obj.TravelDistance;
-            double angleTransform(double angle) => (Math.Sin(3.0 * angle / 2.0 + Math.PI) + 1.0) / 2.0;
+            double angleTransform(double angle) => Math.Pow((Math.Sin(3.0 * angle / 2.0 + Math.PI) + 3.0) / 4.0, 2.5);
+            double rhythmStep(double interval) => Math.Ceiling(2.0 * interval) / 2.0;
 
             if (Previous.Count > 1) 
             {
@@ -85,17 +86,16 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                 double timeDiff = Math.Abs(osuCurrent.StrainTime - osuPrevious.StrainTime);
                 double prevtimeDiff = Math.Abs(osuPrevious.StrainTime - osuPreviousPrevious.StrainTime);
 
-                double timeAvg = (osuCurrent.StrainTime + osuPrevious.StrainTime) / 2.0;
-                double prevTimeAvg = (osuPrevious.StrainTime + osuPreviousPrevious.StrainTime) / 2.0;
-                
-                double currTimeChange = timeAvg != 0 ? timeDiff / timeAvg : 0;
-                double prevTimeChange = prevTimeAvg != 0 ? prevtimeDiff / prevTimeAvg : 0;
+                double timeRatio = rhythmStep(osuCurrent.StrainTime > osuPrevious.StrainTime ? osuCurrent.StrainTime / osuPrevious.StrainTime : osuPrevious.StrainTime / osuCurrent.StrainTime);
+                double prevTimeRatio = rhythmStep(osuPreviousPrevious.StrainTime > osuPrevious.StrainTime ? osuPreviousPrevious.StrainTime / osuPrevious.StrainTime : osuPrevious.StrainTime / osuPreviousPrevious.StrainTime);
 
-                // Unorthodox rhythm gives higher values
-                currTimeChange = sinusoid(currTimeChange);
-                prevTimeChange = sinusoid(prevTimeChange);
+                if (timeRatio % 1 != 0) timeRatio = 1;
+                else timeRatio = 0;
+
+                if (prevTimeRatio % 1 != 0) prevTimeRatio = 1;
+                else prevTimeRatio = 0;
 				
-                double totalTimeChange = Math.Abs(currTimeChange - prevTimeChange);
+                double totalTimeChange = timeRatio + prevTimeRatio;
 
                 // Slider calc
                 double sliderChange = 0;
@@ -118,6 +118,9 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
 
                 /*Console.WriteLine("---");
                 Console.WriteLine("Object placed: " + osuCurrent.BaseObject.StartTime);
+                Console.WriteLine("timeRatio: " + timeRatio);
+                Console.WriteLine("prevTimeRatio: " + prevTimeRatio);
+                Console.WriteLine("timeResult: " + timeResult);
                 Console.WriteLine("totalVelChange: " + totalVelChange);
                 Console.WriteLine("totalDistChange: " + totalDistChange);
                 Console.WriteLine("pattern_variety_scale: " + pattern_variety_scale);
@@ -133,12 +136,6 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                 Console.WriteLine("currTimeChange: " + currTimeChange);
                 Console.WriteLine("prevTimeChange: "+ prevTimeChange);
                 Console.WriteLine("totalTimeChange: " + totalTimeChange);
-                Console.WriteLine("timeResult: " + timeResult);
-                Console.WriteLine("stackScale: " + stackScale);
-                Console.WriteLine("angleScale: " + angleScale);
-                Console.WriteLine("totalVelChange: " + totalVelChange);
-                Console.WriteLine("totalDistChange: " + totalDistChange);
-                Console.WriteLine("patternResult: " + patternResult);
                 Console.WriteLine("timeResult: " + timeResult);*/
 
                 return (weight * patternResult + (1.0 - weight) * timeResult + sliderResult) / Math.Min(osuCurrent.StrainTime, osuPrevious.StrainTime);            
