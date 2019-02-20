@@ -123,7 +123,7 @@ namespace osu.Game.Rulesets.Difficulty.Skills
                 weight *= DecayWeight;
             }
 
-            /*foreach  (Tuple<OsuDifficultyHitObject, double> obj in objPeaks) 
+            /*foreach  (Tuple<DifficultyHitObject, double> obj in objPeaks) 
             {
                 Console.WriteLine("---");
                 Console.WriteLine("Object placed: " + obj.Item1.BaseObject.StartTime);
