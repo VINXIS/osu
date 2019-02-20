@@ -28,6 +28,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
             var osuCurrent = (OsuDifficultyHitObject)current;
 
             double calculateDistance(OsuDifficultyHitObject obj) => obj.JumpDistance + obj.TravelDistance;
+            double angleTransform(double angle) => (Math.Sin(3.0 * angle / 2.0 + Math.PI) + 1.0) / 2.0;
 
             if (Previous.Count > 1) 
             {
@@ -62,24 +63,22 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
 
                 // Angle calc
                 double angleScale = 0;
+                double currAngle = 0;
+                double prevAngle = 0;
+                double prevPrevAngle = 0;
 
                 if (osuCurrent.Angle != null && osuPrevious.Angle != null)
                 {
-                    double angleStdDev;
-                    double maxStdDev;
+                    currAngle = angleTransform(osuCurrent.Angle.Value);
+                    prevAngle = angleTransform(osuPrevious.Angle.Value);
                     if (osuPreviousPrevious.Angle != null)
                     {
-                        double angleAvg = (osuCurrent.Angle.Value + osuPrevious.Angle.Value + osuPreviousPrevious.Angle.Value) / 3.0;
-                        angleStdDev = Math.Sqrt((Math.Pow(osuCurrent.Angle.Value - angleAvg, 2.0) + Math.Pow(osuPrevious.Angle.Value - angleAvg, 2.0) + Math.Pow(osuPreviousPrevious.Angle.Value - angleAvg, 2.0)) / 2.0);
-                        maxStdDev = Math.Sqrt((2.0 * Math.Pow(Math.PI / 3.0, 2.0) + Math.Pow(Math.PI - Math.PI / 3.0, 2.0)) / 2.0);
+                        prevPrevAngle = angleTransform(osuPreviousPrevious.Angle.Value);
+                        angleScale = (currAngle + prevAngle + prevPrevAngle) / 3.0;
                     } else
                     {
-                        double angleAvg = (osuCurrent.Angle.Value + osuPrevious.Angle.Value) / 2.0;
-                        angleStdDev = Math.Sqrt(Math.Pow(osuCurrent.Angle.Value - angleAvg, 2.0) + Math.Pow(osuPrevious.Angle.Value - angleAvg, 2.0));
-                        maxStdDev = Math.Sqrt(2.0 * Math.Pow(Math.PI / 3.0, 2.0) + Math.Pow(Math.PI - Math.PI / 3.0, 2.0));
+                        angleScale = (currAngle + prevAngle) / 2.0;
                     }
-                    angleScale = Math.Pow(1.0 - angleStdDev / maxStdDev, 2.0);
-                    angleScale = 1.0 - 0.7 * Math.Pow(2.0 * angleScale - 1.1, 2.0);
                 }
 
                 // Time calc
