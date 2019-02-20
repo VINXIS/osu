@@ -19,7 +19,7 @@ namespace osu.Game.Rulesets.Difficulty.Skills
         /// </summary>
         public IList<double> StrainPeaks => strainPeaks;
 
-        public double timeMultiplier(OsuDifficultyHitObject current) => 0.5 - Math.Tanh((current.StrainTime - 100.0) / 50.0) / 2.0;
+        public double timeMultiplier(DifficultyHitObject current) => 0.5 - Math.Tanh((current.StrainTime - 100.0) / 50.0) / 2.0;
 
 		public double sinusoid(double inputNumber)
         {
@@ -67,7 +67,7 @@ namespace osu.Game.Rulesets.Difficulty.Skills
         private double currentSectionPeak = 1; // We also keep track of the peak strain level in the current section.
 
         private readonly List<double> strainPeaks = new List<double>();
-        private readonly List<Tuple<OsuDifficultyHitObject, double>> objPeaks = new List<Tuple<OsuDifficultyHitObject, double>>();
+        private readonly List<Tuple<DifficultyHitObject, double>> objPeaks = new List<Tuple<DifficultyHitObject, double>>();
 
         /// <summary>
         /// Process a <see cref="DifficultyHitObject"/> and update current strain values accordingly.
@@ -77,7 +77,7 @@ namespace osu.Game.Rulesets.Difficulty.Skills
             currentStrain *= strainDecay(current.DeltaTime);
             currentStrain += StrainValueOf(current) * SkillMultiplier;
 
-            objPeaks.Add(new Tuple<OsuDifficultyHitObject, double>(current, currentStrain));
+            objPeaks.Add(new Tuple<DifficultyHitObject, double>(current, currentStrain));
 
             currentSectionPeak = Math.Max(currentStrain, currentSectionPeak);
 
