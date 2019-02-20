@@ -19,16 +19,24 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
         private const double pattern_variety_scale = 8.0;
         private const double time_variety_scale = 0.8;
         private const double weight = 0.375;
-        protected override double StrainValueOf(OsuDifficultyHitObject current)
+        protected override double StrainValueOf(DifficultyHitObject current)
         {
+            if (current.BaseObject is Spinner)
+                return 0;
+
+            var osuCurrent = (OsuDifficultyHitObject)current;
+
             double calculateDistance(OsuDifficultyHitObject obj) => obj.JumpDistance + obj.TravelDistance;
 
             if (Previous.Count > 1) 
             {
+                var osuPrevious = (OsuDifficultyHitObject)Previous[0];
+                var osuPreviousPrevious = (OsuDifficultyHitObject)Previous[1];
+
                 // Cursor velocity calc
                 double currCursorVel = calculateDistance(current) / current.StrainTime;
-                double prevCursorVel = calculateDistance(Previous[0]) / Previous[0].StrainTime;
-                double prevprevCursorVel = calculateDistance(Previous[1]) / Previous[1].StrainTime;
+                double prevCursorVel = calculateDistance(osuPrevious) / osuPrevious.StrainTime;
+                double prevprevCursorVel = calculateDistance(osuPreviousPrevious) / osuPreviousPrevious.StrainTime;
 
                 double diffVel = Math.Abs(currCursorVel - prevCursorVel);
                 double prevDiffVel = Math.Abs(prevCursorVel - prevprevCursorVel);
@@ -41,11 +49,11 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                 double totalVelChange = Math.Sqrt(currVelChange * prevVelChange);
 
                 // Distance calc
-                double distDiff = Math.Abs(calculateDistance(current) - calculateDistance(Previous[0]));
-                double prevDistDiff = Math.Abs(calculateDistance(Previous[0]) - calculateDistance(Previous[1]));
+                double distDiff = Math.Abs(calculateDistance(current) - calculateDistance(osuPrevious));
+                double prevDistDiff = Math.Abs(calculateDistance(osuPrevious) - calculateDistance(osuPreviousPrevious));
 
-                double avgDist = (calculateDistance(current) + calculateDistance(Previous[0])) / 2.0;
-                double prevAvgDist = (calculateDistance(Previous[0]) + calculateDistance(Previous[1])) / 2.0;
+                double avgDist = (calculateDistance(current) + calculateDistance(osuPrevious)) / 2.0;
+                double prevAvgDist = (calculateDistance(osuPrevious) + calculateDistance(osuPreviousPrevious)) / 2.0;
 
                 double currDistChange = avgDist != 0 ? distDiff / avgDist : 0;
                 double prevDistChange = prevAvgDist != 0 ? prevDistDiff / prevAvgDist : 0;
@@ -54,19 +62,19 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                 // Angle calc
                 double angleScale = 0;
 
-                if (current.Angle != null && Previous[0].Angle != null)
+                if (current.Angle != null && osuPrevious.Angle != null)
                 {
                     double angleStdDev;
                     double maxStdDev;
-                    if (Previous[1].Angle != null)
+                    if (osuPreviousPrevious.Angle != null)
                     {
-                        double angleAvg = (current.Angle.Value + Previous[0].Angle.Value + Previous[1].Angle.Value) / 3.0;
-                        angleStdDev = Math.Sqrt((Math.Pow(current.Angle.Value - angleAvg, 2.0) + Math.Pow(Previous[0].Angle.Value - angleAvg, 2.0) + Math.Pow(Previous[1].Angle.Value - angleAvg, 2.0)) / 2.0);
+                        double angleAvg = (current.Angle.Value + osuPrevious.Angle.Value + osuPreviousPrevious.Angle.Value) / 3.0;
+                        angleStdDev = Math.Sqrt((Math.Pow(current.Angle.Value - angleAvg, 2.0) + Math.Pow(osuPrevious.Angle.Value - angleAvg, 2.0) + Math.Pow(osuPreviousPrevious.Angle.Value - angleAvg, 2.0)) / 2.0);
                         maxStdDev = Math.Sqrt((2.0 * Math.Pow(Math.PI / 3.0, 2.0) + Math.Pow(Math.PI - Math.PI / 3.0, 2.0)) / 2.0);
                     } else
                     {
-                        double angleAvg = (current.Angle.Value + Previous[0].Angle.Value) / 2.0;
-                        angleStdDev = Math.Sqrt(Math.Pow(current.Angle.Value - angleAvg, 2.0) + Math.Pow(Previous[0].Angle.Value - angleAvg, 2.0));
+                        double angleAvg = (current.Angle.Value + osuPrevious.Angle.Value) / 2.0;
+                        angleStdDev = Math.Sqrt(Math.Pow(current.Angle.Value - angleAvg, 2.0) + Math.Pow(osuPrevious.Angle.Value - angleAvg, 2.0));
                         maxStdDev = Math.Sqrt(2.0 * Math.Pow(Math.PI / 3.0, 2.0) + Math.Pow(Math.PI - Math.PI / 3.0, 2.0));
                     }
                     angleScale = Math.Pow(1.0 - angleStdDev / maxStdDev, 2.0);
@@ -74,11 +82,11 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                 }
 
                 // Time calc
-                double timeDiff = Math.Abs(current.StrainTime - Previous[0].StrainTime);
-                double prevtimeDiff = Math.Abs(Previous[0].StrainTime - Previous[1].StrainTime);
+                double timeDiff = Math.Abs(current.StrainTime - osuPrevious.StrainTime);
+                double prevtimeDiff = Math.Abs(osuPrevious.StrainTime - osuPreviousPrevious.StrainTime);
 
-                double timeAvg = (current.StrainTime + Previous[0].StrainTime) / 2.0;
-                double prevTimeAvg = (Previous[0].StrainTime + Previous[1].StrainTime) / 2.0;
+                double timeAvg = (current.StrainTime + osuPrevious.StrainTime) / 2.0;
+                double prevTimeAvg = (osuPrevious.StrainTime + osuPreviousPrevious.StrainTime) / 2.0;
                 
                 double currTimeChange = timeAvg != 0 ? timeDiff / timeAvg : 0;
                 double prevTimeChange = prevTimeAvg != 0 ? prevtimeDiff / prevTimeAvg : 0;
@@ -92,7 +100,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                 // Slider calc
                 double sliderChange = 0;
 
-                if (current.BaseObject is Slider currentSlider && Previous[0].BaseObject is Slider previousSlider)
+                if (current.BaseObject is Slider currentSlider && osuPrevious.BaseObject is Slider previousSlider)
                 {
                     double sliderDiff = Math.Abs(currentSlider.Velocity - previousSlider.Velocity);
                     double sliderAvg = (currentSlider.Velocity + previousSlider.Velocity) / 2.0;
@@ -100,13 +108,13 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                 }
 
                 // Apply dec. multipliers to values for non-constant rhythm/stacks
-                double stackScale = Math.Min(1.0, Math.Min(Math.Pow((calculateDistance(current)) / 100.0, 2.0), Math.Pow((calculateDistance(Previous[0])) / 100.0, 2.0)));
+                double stackScale = Math.Min(1.0, Math.Min(Math.Pow((calculateDistance(current)) / 100.0, 2.0), Math.Pow((calculateDistance(osuPrevious)) / 100.0, 2.0)));
                 double timeScale = time_scale_factor / (time_scale_factor + (timeDiff + prevtimeDiff) / 2.0);
 
                 // Final values
                 double sliderResult = timeMultiplier(current) * (1.0 - timeScale) * sliderChange;
                 double patternResult = pattern_variety_scale * timeMultiplier(current) * stackScale * timeScale * angleScale * Math.Sqrt(totalVelChange * totalDistChange);
-                double timeResult = Math.Max(timeMultiplier(current), timeMultiplier(Previous[0])) * Math.Pow(totalTimeChange, time_variety_scale);
+                double timeResult = Math.Max(timeMultiplier(current), timeMultiplier(osuPrevious)) * Math.Pow(totalTimeChange, time_variety_scale);
 
                 /*Console.WriteLine("---");
                 Console.WriteLine("Object placed: " + current.BaseObject.StartTime);
@@ -133,7 +141,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                 Console.WriteLine("patternResult: " + patternResult);
                 Console.WriteLine("timeResult: " + timeResult);*/
 
-                return (weight * patternResult + (1.0 - weight) * timeResult + sliderResult) / Math.Min(current.StrainTime, Previous[0].StrainTime);            
+                return (weight * patternResult + (1.0 - weight) * timeResult + sliderResult) / Math.Min(current.StrainTime, osuPrevious.StrainTime);            
             } else return 0;
         }
     }
