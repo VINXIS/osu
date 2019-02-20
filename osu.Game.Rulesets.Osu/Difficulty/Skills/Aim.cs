@@ -2,7 +2,10 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using System;
+using osu.Game.Rulesets.Difficulty.Preprocessing;
+using osu.Game.Rulesets.Difficulty.Skills;
 using osu.Game.Rulesets.Osu.Difficulty.Preprocessing;
+using osu.Game.Rulesets.Osu.Objects;
 
 namespace osu.Game.Rulesets.Osu.Difficulty.Skills
 {
@@ -17,18 +20,23 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
         protected override double SkillMultiplier => 13.1;
         protected override double StrainDecayBase => 0.15;
 
-        protected override double StrainValueOf(OsuDifficultyHitObject current)
+        protected override double StrainValueOf(DifficultyHitObject current)
         {
+            if (current.BaseObject is Spinner)
+                return 0;
+
+            var osuCurrent = (OsuDifficultyHitObject)current;
+
             double result = 0;
-
-            const double scale = 90;
-
-            double applyDiminishingExp(double val) => Math.Pow(val, 0.99);
 
             if (Previous.Count > 0)
             {
-                if (current.Angle != null && current.Angle.Value > angle_bonus_begin)
+                var osuPrevious = (OsuDifficultyHitObject)Previous[0];
+
+                if (osuCurrent.Angle != null && osuCurrent.Angle.Value > angle_bonus_begin)
                 {
+                    const double scale = 90;
+
                     var angleBonus = Math.Sqrt(
                         Math.Max(Previous[0].JumpDistance - scale, 0)
                         * Math.Pow(Math.Sin(current.Angle.Value - angle_bonus_begin), 2)
@@ -38,13 +46,15 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                 }
             }
 
-            double jumpDistanceExp = applyDiminishingExp(current.JumpDistance);
-            double travelDistanceExp = applyDiminishingExp(current.TravelDistance);
+            double jumpDistanceExp = applyDiminishingExp(osuCurrent.JumpDistance);
+            double travelDistanceExp = applyDiminishingExp(osuCurrent.TravelDistance);
 
             return Math.Max(
-                result + (jumpDistanceExp + travelDistanceExp + Math.Sqrt(travelDistanceExp * jumpDistanceExp)) / Math.Max(current.StrainTime, timing_threshold),
-                (Math.Sqrt(travelDistanceExp * jumpDistanceExp) + jumpDistanceExp + travelDistanceExp) / current.StrainTime
+                result + (jumpDistanceExp + travelDistanceExp + Math.Sqrt(travelDistanceExp * jumpDistanceExp)) / Math.Max(osuCurrent.StrainTime, timing_threshold),
+                (Math.Sqrt(travelDistanceExp * jumpDistanceExp) + jumpDistanceExp + travelDistanceExp) / osuCurrent.StrainTime
             );
         }
+
+        private double applyDiminishingExp(double val) => Math.Pow(val, 0.99);
     }
 }

@@ -3,21 +3,22 @@
 
 using System;
 using System.Collections.Generic;
-using osu.Game.Rulesets.Osu.Difficulty.Preprocessing;
-using osu.Game.Rulesets.Osu.Difficulty.Utils;
-using osu.Game.Rulesets.Osu.Objects;
+using osu.Game.Rulesets.Difficulty.Preprocessing;
+using osu.Game.Rulesets.Difficulty.Utils;
 
-namespace osu.Game.Rulesets.Osu.Difficulty.Skills
+namespace osu.Game.Rulesets.Difficulty.Skills
 {
     /// <summary>
-    /// Used to processes strain values of <see cref="OsuDifficultyHitObject"/>s, keep track of strain levels caused by the processed objects
+    /// Used to processes strain values of <see cref="DifficultyHitObject"/>s, keep track of strain levels caused by the processed objects
     /// and to calculate a final difficulty value representing the difficulty of hitting all the processed objects.
     /// </summary>
     public abstract class Skill
     {
-        protected const double SINGLE_SPACING_THRESHOLD = 125;
-        protected const double STREAM_SPACING_THRESHOLD = 110;
-        
+        /// <summary>
+        /// The peak strain for each <see cref="DifficultyCalculator.SectionLength"/> section of the beatmap.
+        /// </summary>
+        public IList<double> StrainPeaks => strainPeaks;
+
         public double timeMultiplier(OsuDifficultyHitObject current) => 0.5 - Math.Tanh((current.StrainTime - 100.0) / 50.0) / 2.0;
 
 		public double sinusoid(double inputNumber)
@@ -53,23 +54,28 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
         protected abstract double StrainDecayBase { get; }
 
         /// <summary>
-        /// <see cref="OsuDifficultyHitObject"/>s that were processed previously. They can affect the strain values of the following objects.
+        /// The weight by which each strain value decays.
         /// </summary>
-        protected readonly History<OsuDifficultyHitObject> Previous = new History<OsuDifficultyHitObject>(2); // Contained objects not used yet
+        protected virtual double DecayWeight => 0.9;
+
+        /// <summary>
+        /// <see cref="DifficultyHitObject"/>s that were processed previously. They can affect the strain values of the following objects.
+        /// </summary>
+        protected readonly LimitedCapacityStack<DifficultyHitObject> Previous = new LimitedCapacityStack<DifficultyHitObject>(2); // Contained objects not used yet
 
         private double currentStrain = 1; // We keep track of the strain level at all times throughout the beatmap.
         private double currentSectionPeak = 1; // We also keep track of the peak strain level in the current section.
+
         private readonly List<double> strainPeaks = new List<double>();
         private readonly List<Tuple<OsuDifficultyHitObject, double>> objPeaks = new List<Tuple<OsuDifficultyHitObject, double>>();
 
         /// <summary>
-        /// Process an <see cref="OsuDifficultyHitObject"/> and update current strain values accordingly.
+        /// Process a <see cref="DifficultyHitObject"/> and update current strain values accordingly.
         /// </summary>
-        public void Process(OsuDifficultyHitObject current)
+        public void Process(DifficultyHitObject current)
         {
             currentStrain *= strainDecay(current.DeltaTime);
-            if (!(current.BaseObject is Spinner))
-                currentStrain += StrainValueOf(current) * SkillMultiplier;
+            currentStrain += StrainValueOf(current) * SkillMultiplier;
 
             objPeaks.Add(new Tuple<OsuDifficultyHitObject, double>(current, currentStrain));
 
@@ -90,7 +96,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
         /// <summary>
         /// Sets the initial strain level for a new section.
         /// </summary>
-        /// <param name="offset">The beginning of the new section in milliseconds</param>
+        /// <param name="offset">The beginning of the new section in milliseconds.</param>
         public void StartNewSectionFrom(double offset)
         {
             // The maximum strain of the new section is not zero by default, strain decays as usual regardless of section boundaries.
@@ -100,7 +106,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
         }
 
         /// <summary>
-        /// Returns the calculated difficulty value representing all processed <see cref="OsuDifficultyHitObject"/>s.
+        /// Returns the calculated difficulty value representing all processed <see cref="DifficultyHitObject"/>s.
         /// </summary>
         public double DifficultyValue()
         {
@@ -114,7 +120,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
             foreach (double strain in strainPeaks)
             {
                 difficulty += strain * weight;
-                weight *= 0.9;
+                weight *= DecayWeight;
             }
 
             /*foreach  (Tuple<OsuDifficultyHitObject, double> obj in objPeaks) 
@@ -128,9 +134,9 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
         }
 
         /// <summary>
-        /// Calculates the strain value of an <see cref="OsuDifficultyHitObject"/>. This value is affected by previously processed objects.
+        /// Calculates the strain value of a <see cref="DifficultyHitObject"/>. This value is affected by previously processed objects.
         /// </summary>
-        protected abstract double StrainValueOf(OsuDifficultyHitObject current);
+        protected abstract double StrainValueOf(DifficultyHitObject current);
 
         private double strainDecay(double ms) => Math.Pow(StrainDecayBase, ms / 1000);
     }
