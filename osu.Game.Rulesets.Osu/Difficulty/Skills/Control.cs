@@ -18,7 +18,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
         protected override double StrainDecayBase => 0.3;
         private const double time_scale_factor = 20.0;
         private const double pattern_variety_scale = 8.0;
-        private const double time_variety_scale = 0.8;
+        private const double time_variety_scale = 1.5;
         private const double weight = 0.375;
         protected override double StrainValueOf(DifficultyHitObject current)
         {
@@ -28,7 +28,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
             var osuCurrent = (OsuDifficultyHitObject)current;
 
             double calculateDistance(OsuDifficultyHitObject obj) => obj.JumpDistance + obj.TravelDistance;
-            double angleTransform(double angle) => Math.Pow((Math.Sin(3.0 * angle / 2.0 + Math.PI) + 3.0) / 4.0, 2.5);
+            double angleTransform(double angle) => Math.Pow((Math.Sin(3.0 * angle / 2.0 + Math.PI) + 1.3) / 2.0, 1.40);
             double rhythmStep(double interval) => Math.Round(2.0 * interval) / 2.0;
 
             if (Previous.Count > 1) 
@@ -104,17 +104,18 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                 {
                     double sliderDiff = Math.Abs(currentSlider.Velocity - previousSlider.Velocity);
                     double sliderAvg = (currentSlider.Velocity + previousSlider.Velocity) / 2.0;
-                    sliderChange = sliderAvg != 0 ? 1.5 * sliderDiff / sliderAvg : 0;
+                    sliderChange = sliderAvg != 0 ? sliderDiff / sliderAvg : 0;
                 }
 
-                // Apply dec. multipliers to values for non-constant rhythm/stacks
-                double stackScale = Math.Min(1.0, Math.Min(Math.Pow((calculateDistance(osuCurrent)) / 100.0, 2.0), Math.Pow((calculateDistance(osuPrevious)) / 100.0, 2.0)));
+                // Pattern Result Multipliers
+                double spacingScale = Math.Min(1.0, Math.Min(Math.Pow((calculateDistance(osuCurrent)) / 100.0, 2.0), Math.Pow((calculateDistance(osuPrevious)) / 100.0, 2.0)));
                 double timeScale = time_scale_factor / (time_scale_factor + (timeDiff + prevtimeDiff) / 2.0);
+                angleScale *= spacingScale;
 
                 // Final values
                 double sliderResult = timeMultiplier(osuCurrent) * (1.0 - timeScale) * sliderChange;
-                double patternResult = pattern_variety_scale * timeMultiplier(osuCurrent) * stackScale * timeScale * angleScale * Math.Sqrt(totalVelChange * totalDistChange);
-                double timeResult = Math.Max(timeMultiplier(osuCurrent), timeMultiplier(osuPrevious)) * Math.Pow(totalTimeChange, time_variety_scale);
+                double patternResult = pattern_variety_scale * timeMultiplier(osuCurrent) * spacingScale * timeScale * angleScale * Math.Sqrt(totalVelChange * totalDistChange);
+                double timeResult = time_variety_scale * Math.Min(timeMultiplier(osuCurrent), timeMultiplier(osuPrevious)) * totalTimeChange;
 
                 /*Console.WriteLine("---");
                 Console.WriteLine("Object placed: " + osuCurrent.BaseObject.StartTime);
@@ -136,6 +137,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                 Console.WriteLine("currTimeChange: " + currTimeChange);
                 Console.WriteLine("prevTimeChange: "+ prevTimeChange);
                 Console.WriteLine("totalTimeChange: " + totalTimeChange);
+                Console.WriteLine("patternResult: " + patternResult);
                 Console.WriteLine("timeResult: " + timeResult);*/
 
                 return (weight * patternResult + (1.0 - weight) * timeResult + sliderResult) / Math.Min(osuCurrent.StrainTime, osuPrevious.StrainTime);            
