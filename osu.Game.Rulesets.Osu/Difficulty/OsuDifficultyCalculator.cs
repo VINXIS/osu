@@ -36,8 +36,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             double starRating = Math.Pow(
                     aimRating + 
                     speedRating + 
-                    controlRating +
-                    Math.Abs(aimRating - speedRating) / 2.0
+                    controlRating
                 , 0.9);
 
             // Todo: These int casts are temporary to achieve 1:1 results with osu!stable, and should be removed in the future
