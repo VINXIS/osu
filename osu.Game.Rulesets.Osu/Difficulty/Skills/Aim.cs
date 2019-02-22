@@ -17,7 +17,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
         private const double angle_bonus_begin = Math.PI / 3;
         private const double timing_threshold = 107;
 
-        protected override double SkillMultiplier => 13.1;
+        protected override double SkillMultiplier => 14.2;
         protected override double StrainDecayBase => 0.15;
 
         protected override double StrainValueOf(DifficultyHitObject current)

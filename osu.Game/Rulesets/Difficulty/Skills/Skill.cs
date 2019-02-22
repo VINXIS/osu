@@ -19,7 +19,7 @@ namespace osu.Game.Rulesets.Difficulty.Skills
         /// </summary>
         public IList<double> StrainPeaks => strainPeaks;
 
-        public double timeMultiplier(DifficultyHitObject current) => (1.0 - Math.Tanh(current.DeltaTime / 100.0 - 1.0)) / 2.0;
+        public double timeMultiplier(DifficultyHitObject current) => (1.0 - Math.Tanh(current.DeltaTime / 60.0 - 1.5)) / 2.0;
 		
 		
         /// <summary>

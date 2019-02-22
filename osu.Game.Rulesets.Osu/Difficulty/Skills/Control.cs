@@ -17,8 +17,8 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
         protected override double SkillMultiplier => 5000;
         protected override double StrainDecayBase => 0.3;
         private const double time_scale_factor = 20.0;
-        private const double pattern_variety_scale = 10.0;
-        private const double time_variety_scale = 2.0;
+        private const double pattern_variety_scale = 12.0;
+        private const double time_variety_scale = 4.0;
         private const double weight = 0.375;
         protected override double StrainValueOf(DifficultyHitObject current)
         {
@@ -28,14 +28,14 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
             var osuCurrent = (OsuDifficultyHitObject)current;
 
             double calculateDistance(OsuDifficultyHitObject obj) => obj.JumpDistance + obj.TravelDistance;
-            double angleTransform(double angle) => 1.2 * (Math.Pow(angle - Math.PI * 5.0 / 12.0, 2.0) + 0.1) / Math.PI;
+            double angleTransform(double angle) => 1.0 - Math.Sin(2.0 * Math.Pow(angle, 0.4));
 
             if (Previous.Count > 1) 
             {
                 var osuPrevious = (OsuDifficultyHitObject)Previous[0];
                 var osuPreviousPrevious = (OsuDifficultyHitObject)Previous[1];
 
-                // Cursor velocity calc
+                // Cursor velocity change calc
                 double currCursorVel = calculateDistance(osuCurrent) / osuCurrent.StrainTime;
                 double prevCursorVel = calculateDistance(osuPrevious) / osuPrevious.StrainTime;
                 double prevprevCursorVel = calculateDistance(osuPreviousPrevious) / osuPreviousPrevious.StrainTime;
@@ -50,7 +50,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                 double prevVelChange = prevAvgVel != 0 ? prevDiffVel / prevAvgVel : 0;
                 double totalVelChange = Math.Sqrt(currVelChange * prevVelChange);
 
-                // Distance calc
+                // Distance change calc
                 double distDiff = Math.Abs(calculateDistance(osuCurrent) - calculateDistance(osuPrevious));
                 double prevDistDiff = Math.Abs(calculateDistance(osuPrevious) - calculateDistance(osuPreviousPrevious));
 
@@ -61,24 +61,38 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                 double prevDistChange = prevAvgDist != 0 ? prevDistDiff / prevAvgDist : 0;
                 double totalDistChange = Math.Sqrt(currDistChange * prevDistChange);
 
-                // Angle calc
+                // Angle scale calc
                 double angleScale = 0;
                 double currAngle = 0;
                 double prevAngle = 0;
                 double prevPrevAngle = 0;
+                double angleResult = 0;
 
                 if (osuCurrent.Angle != null && osuPrevious.Angle != null)
                 {
-                    currAngle = angleTransform(osuCurrent.Angle.Value);
-                    prevAngle = angleTransform(osuPrevious.Angle.Value);
+                    double angleStdDev;
+                    double maxStdDev;
+                    currAngle = osuCurrent.Angle.Value;
+                    prevAngle = osuPrevious.Angle.Value;
                     if (osuPreviousPrevious.Angle != null)
                     {
-                        prevPrevAngle = angleTransform(osuPreviousPrevious.Angle.Value);
-                        angleScale = (currAngle + prevAngle + prevPrevAngle) / 3.0;
+                        prevPrevAngle = osuPreviousPrevious.Angle.Value;
+
+                        double angleAvg = (currAngle + prevAngle + prevPrevAngle) / 3.0;
+                        angleStdDev = Math.Sqrt((Math.Pow(currAngle - angleAvg, 2.0) + Math.Pow(prevAngle - angleAvg, 2.0) + Math.Pow(prevPrevAngle - angleAvg, 2.0)) / 2.0);
+                        maxStdDev = Math.Sqrt((2.0 * Math.Pow(Math.PI / 3.0, 2.0) + Math.Pow(Math.PI - Math.PI / 3.0, 2.0)) / 2.0);
+
+                        angleScale = angleTransform((currAngle + prevAngle + prevPrevAngle) / 3.0);
                     } else
                     {
-                        angleScale = (currAngle + prevAngle) / 2.0;
+                        double angleAvg = (currAngle + prevAngle) / 2.0;
+                        angleStdDev = Math.Sqrt(Math.Pow(currAngle - angleAvg, 2.0) + Math.Pow(prevAngle - angleAvg, 2.0));
+                        maxStdDev = Math.Sqrt(2.0 * Math.Pow(Math.PI / 3.0, 2.0) + Math.Pow(Math.PI - Math.PI / 3.0, 2.0));
+
+                        angleScale = angleTransform((currAngle + prevAngle) / 2.0);
                     }
+                    double angleWeight = Math.Pow(1.0 - angleStdDev / maxStdDev, 2.0);
+                    angleResult = (1.0 - angleWeight) * (1.0 - 0.7 * Math.Pow(2.0 * angleWeight - 1.1, 2.0)) + angleWeight * angleScale;
                 }
 
                 // Time calc
@@ -87,15 +101,14 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                 double currMod = currMaxStrain % currMinStrain;
                 double currRoot1 = currMaxStrain - currMod;
                 double currRoot2 = currMaxStrain + currMinStrain - currMod;
-                double currTimeVal = - Math.Pow(4.0 * (currMaxStrain - currRoot1) * (currMaxStrain - currRoot2) / Math.Pow(currMinStrain, 2.0), 7.0);
+                double currTimeVal = Math.Pow(- 4.0 * (currMaxStrain - currRoot1) * (currMaxStrain - currRoot2) / Math.Pow(currMinStrain, 2.0), 7.0);
 
                 double prevMinStrain = Math.Min(osuPreviousPrevious.StrainTime, osuPrevious.StrainTime);
                 double prevMaxStrain = Math.Max(osuPreviousPrevious.StrainTime, osuPrevious.StrainTime);
                 double prevMod = prevMaxStrain % prevMinStrain;
                 double prevRoot1 = prevMaxStrain - prevMod;
                 double prevRoot2 = prevMaxStrain + prevMinStrain - prevMod;
-                double prevTimeVal = - Math.Pow(4.0 * (prevMaxStrain - prevRoot1) * (prevMaxStrain - prevRoot2) / Math.Pow(prevMinStrain, 2.0), 7.0);
-
+                double prevTimeVal = Math.Pow(- 4.0 * (prevMaxStrain - prevRoot1) * (prevMaxStrain - prevRoot2) / Math.Pow(prevMinStrain, 2.0), 7.0);
 
                 double timeDiff = Math.Abs(osuCurrent.StrainTime - osuPrevious.StrainTime);
                 double prevtimeDiff = Math.Abs(osuPrevious.StrainTime - osuPreviousPrevious.StrainTime);
@@ -117,14 +130,14 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                 double timeScale = time_scale_factor / (time_scale_factor + (timeDiff + prevtimeDiff) / 2.0);
 
                 // Final values
-                double sliderResult = timeMultiplier(osuCurrent) * (1.0 - timeScale) * sliderChange;
-                double patternResult = pattern_variety_scale * timeMultiplier(osuCurrent) * spacingScale * angleScale * timeScale * Math.Sqrt(totalVelChange * totalDistChange);
-                double timeResult = time_variety_scale * Math.Min(timeMultiplier(osuCurrent), timeMultiplier(osuPrevious)) * totalTimeChange;
+                double sliderResult = Math.Min(timeMultiplier(osuCurrent), timeMultiplier(osuPrevious)) * (1.0 - timeScale) * sliderChange;
+                double patternResult = pattern_variety_scale * timeMultiplier(osuCurrent) * spacingScale * timeScale * angleResult * Math.Sqrt(totalVelChange * totalDistChange);
+                double timeResult = time_variety_scale * Math.Pow(Math.Min(timeMultiplier(osuCurrent), timeMultiplier(osuPrevious)), 2.0) * totalTimeChange;
 
                 /*Console.WriteLine("---");
                 Console.WriteLine("Object placed: " + osuCurrent.BaseObject.StartTime);
-                Console.WriteLine("timeRatio: " + timeRatio);
-                Console.WriteLine("prevTimeRatio: " + prevTimeRatio);
+                Console.WriteLine("currTimeVal: " + currTimeVal);
+                Console.WriteLine("prevTimeVal: " + prevTimeVal);
                 Console.WriteLine("timeResult: " + timeResult);
                 Console.WriteLine("totalVelChange: " + totalVelChange);
                 Console.WriteLine("totalDistChange: " + totalDistChange);
