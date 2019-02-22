@@ -17,7 +17,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
         protected override double SkillMultiplier => 5000;
         protected override double StrainDecayBase => 0.3;
         private const double time_scale_factor = 20.0;
-        private const double pattern_variety_scale = 8.0;
+        private const double pattern_variety_scale = 10.0;
         private const double time_variety_scale = 12.0;
         private const double weight = 0.45;
         protected override double StrainValueOf(DifficultyHitObject current)
