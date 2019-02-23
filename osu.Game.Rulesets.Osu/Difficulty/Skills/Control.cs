@@ -14,8 +14,8 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
     /// </summary>
     public class Control : Skill
     {
-        protected override double SkillMultiplier => 5000;
-        protected override double StrainDecayBase => 0.3;
+        protected override double SkillMultiplier => 10000;
+        protected override double StrainDecayBase => 0.15;
         private const double time_scale_factor = 20.0;
 
         protected override double StrainValueOf(DifficultyHitObject current)
@@ -59,7 +59,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                     double maxStdDev = Math.Sqrt(2.0 * Math.Pow(Math.PI / 3.0, 2.0) + Math.Pow(Math.PI - Math.PI / 3.0, 2.0));
 
                     double angleWeight = Math.Pow(1.0 - angleStdDev / maxStdDev, 2.0);
-                    double angleScale = angleTransform((currAngle + prevAngle) / 2.0);
+                    double angleScale = (angleTransform(currAngle) + angleTransform(prevAngle)) / 2.0;
                     angleResult = (1.0 - angleWeight) * (1.0 - 0.7 * Math.Pow(2.0 * angleWeight - 1.1, 2.0)) + angleWeight * angleScale;
                 }
 
@@ -79,7 +79,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
 
                 // Final values
                 double sliderResult = Math.Min(timeMultiplier(osuCurrent), timeMultiplier(osuPrevious)) * (1.0 - timeScale) * sliderChange;
-                double patternResult = timeMultiplier(osuCurrent) * spacingScale * timeScale * angleResult * Math.Sqrt(velChange * distChange);
+                double patternResult = timeMultiplier(osuCurrent) * spacingScale * timeScale * Math.Pow(velChange * angleResult * distChange, 0.25);
 
                 return (patternResult + sliderResult) / Math.Min(osuCurrent.StrainTime, osuPrevious.StrainTime);            
             } else return 0;

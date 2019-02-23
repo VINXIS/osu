@@ -14,8 +14,8 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
     /// </summary>
     public class Rhythm : Skill
     {
-        protected override double SkillMultiplier => 5000;
-        protected override double StrainDecayBase => 0.15;
+        protected override double SkillMultiplier => 10000;
+        protected override double StrainDecayBase => 0.3;
         protected override double StrainValueOf(DifficultyHitObject current)
         {
             if (current.BaseObject is Spinner)
