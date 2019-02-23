@@ -14,12 +14,13 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
     /// </summary>
     public class Control : Skill
     {
-        protected override double SkillMultiplier => 5000;
+        protected override double SkillMultiplier => 2500;
         protected override double StrainDecayBase => 0.3;
         private const double time_scale_factor = 20.0;
-        private const double pattern_variety_scale = 10.0;
-        private const double time_variety_scale = 12.0;
+        private const double pattern_variety_scale = 1.0;
+        private const double time_variety_scale = 1.0;
         private const double weight = 0.45;
+        private const double spread = 0.6;
         protected override double StrainValueOf(DifficultyHitObject current)
         {
             if (current.BaseObject is Spinner)
@@ -59,8 +60,8 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                     double angleAvg = (currAngle + prevAngle) / 2.0;
                     double angleStdDev = Math.Sqrt(Math.Pow(currAngle - angleAvg, 2.0) + Math.Pow(prevAngle - angleAvg, 2.0));
                     double maxStdDev = Math.Sqrt(2.0 * Math.Pow(Math.PI / 3.0, 2.0) + Math.Pow(Math.PI - Math.PI / 3.0, 2.0));
-                    double angleWeight = Math.Pow(1.0 - angleStdDev / maxStdDev, 2.0);
 
+                    double angleWeight = Math.Pow(1.0 - angleStdDev / maxStdDev, 2.0);
                     double angleScale = angleTransform((currAngle + prevAngle) / 2.0);
                     angleResult = (1.0 - angleWeight) * (1.0 - 0.7 * Math.Pow(2.0 * angleWeight - 1.1, 2.0)) + angleWeight * angleScale;
                 }
@@ -117,7 +118,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                 Console.WriteLine("patternResult: " + patternResult);
                 Console.WriteLine("timeResult: " + timeResult);*/
 
-                return (weight * patternResult + (1.0 - weight) * timeResult + sliderResult) / Math.Min(osuCurrent.StrainTime, osuPrevious.StrainTime);            
+                return Math.Pow((weight * patternResult + (1.0 - weight) * timeResult + sliderResult) / Math.Min(osuCurrent.StrainTime, osuPrevious.StrainTime), spread);            
             } else return 0;
         }
     }
