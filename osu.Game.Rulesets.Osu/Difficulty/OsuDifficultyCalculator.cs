@@ -33,10 +33,12 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             double aimRating = Math.Sqrt(skills[0].DifficultyValue()) * difficulty_multiplier;
             double speedRating = Math.Sqrt(skills[1].DifficultyValue()) * difficulty_multiplier;
             double controlRating = Math.Sqrt(skills[2].DifficultyValue()) * difficulty_multiplier;
+            double rhythmRating = Math.Sqrt(skills[3].DifficultyValue()) * difficulty_multiplier;
             double starRating = Math.Pow(
                     aimRating + 
                     speedRating + 
-                    controlRating
+                    controlRating +
+                    rhythmRating
                 , 0.9);
 
             // Todo: These int casts are temporary to achieve 1:1 results with osu!stable, and should be removed in the future
@@ -54,6 +56,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
                 AimStrain = aimRating,
                 SpeedStrain = speedRating,
                 ControlStrain = controlRating,
+                RhythmStrain = rhythmRating,
                 ApproachRate = preempt > 1200 ? (1800 - preempt) / 120 : (1200 - preempt) / 150 + 5,
                 OverallDifficulty = (80 - hitWindowGreat) / 6,
                 MaxCombo = maxCombo
@@ -78,7 +81,8 @@ namespace osu.Game.Rulesets.Osu.Difficulty
         {
             new Aim(),
             new Speed(),
-            new Control()
+            new Control(),
+            new Rhythm(),
         };
 
         protected override Mod[] DifficultyAdjustmentMods => new Mod[]

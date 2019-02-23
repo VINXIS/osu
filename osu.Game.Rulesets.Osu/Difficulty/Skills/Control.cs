@@ -10,17 +10,14 @@ using osu.Game.Rulesets.Osu.Objects;
 namespace osu.Game.Rulesets.Osu.Difficulty.Skills
 {
     /// <summary>
-    /// Represents the skill required to adjust your movement and tapping to varying spacing and rhythms in short periods of time.
+    /// Represents the skill required to adjust your movement to varying spacing.
     /// </summary>
     public class Control : Skill
     {
-        protected override double SkillMultiplier => 2500;
+        protected override double SkillMultiplier => 5000;
         protected override double StrainDecayBase => 0.3;
         private const double time_scale_factor = 20.0;
-        private const double pattern_variety_scale = 1.0;
-        private const double time_variety_scale = 1.0;
-        private const double weight = 0.45;
-        private const double spread = 0.6;
+
         protected override double StrainValueOf(DifficultyHitObject current)
         {
             if (current.BaseObject is Spinner)
@@ -66,16 +63,6 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                     angleResult = (1.0 - angleWeight) * (1.0 - 0.7 * Math.Pow(2.0 * angleWeight - 1.1, 2.0)) + angleWeight * angleScale;
                 }
 
-                // Time calc
-                double currMinStrain = Math.Min(osuCurrent.StrainTime, osuPrevious.StrainTime);
-                double currMaxStrain = Math.Max(osuCurrent.StrainTime, osuPrevious.StrainTime);
-                double currMod = currMaxStrain % currMinStrain;
-                double currRoot1 = currMaxStrain - currMod;
-                double currRoot2 = currMaxStrain + currMinStrain - currMod;
-                double timeChange = Math.Pow(- 4.0 * (currMaxStrain - currRoot1) * (currMaxStrain - currRoot2) / Math.Pow(currMinStrain, 2.0), 7.0);
-
-                double timeDiff = Math.Abs(osuCurrent.StrainTime - osuPrevious.StrainTime);
-
                 // Slider calc
                 double sliderChange = 0;
 
@@ -88,37 +75,13 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
 
                 // Pattern Result Multipliers
                 double spacingScale = Math.Min(1.0, Math.Min(Math.Pow((calculateDistance(osuCurrent)) / 100.0, 2.0), Math.Pow((calculateDistance(osuPrevious)) / 100.0, 2.0)));
-                double timeScale = time_scale_factor / (time_scale_factor + timeDiff);
+                double timeScale = time_scale_factor / (time_scale_factor + Math.Abs(osuCurrent.StrainTime - osuPrevious.StrainTime));
 
                 // Final values
                 double sliderResult = Math.Min(timeMultiplier(osuCurrent), timeMultiplier(osuPrevious)) * (1.0 - timeScale) * sliderChange;
-                double patternResult = pattern_variety_scale * timeMultiplier(osuCurrent) * spacingScale * timeScale * angleResult * Math.Sqrt(velChange * distChange);
-                double timeResult = time_variety_scale * Math.Pow(Math.Min(timeMultiplier(osuCurrent), timeMultiplier(osuPrevious)), 2.0) * timeChange;
+                double patternResult = timeMultiplier(osuCurrent) * spacingScale * timeScale * angleResult * Math.Sqrt(velChange * distChange);
 
-                /*Console.WriteLine("---");
-                Console.WriteLine("Object placed: " + osuCurrent.BaseObject.StartTime);
-                Console.WriteLine("currTimeVal: " + currTimeVal);
-                Console.WriteLine("prevTimeVal: " + prevTimeVal);
-                Console.WriteLine("timeResult: " + timeResult);
-                Console.WriteLine("totalVelChange: " + totalVelChange);
-                Console.WriteLine("totalDistChange: " + totalDistChange);
-                Console.WriteLine("pattern_variety_scale: " + pattern_variety_scale);
-                Console.WriteLine("timeMultiplier(osuCurrent): " + timeMultiplier(osuCurrent));
-                Console.WriteLine("stackScale: " + stackScale);
-                Console.WriteLine("timeScale: " + timeScale);
-                Console.WriteLine("angleScale: " + angleScale);
-                Console.WriteLine("patternResult: " + patternResult);
-                Console.WriteLine("timeDiff: " + timeDiff);
-                Console.WriteLine("prevtimeDiff: "+ prevtimeDiff);
-                Console.WriteLine("timeAvg: " + timeAvg);
-                Console.WriteLine("prevTimeAvg: "+ prevTimeAvg);
-                Console.WriteLine("currTimeChange: " + currTimeChange);
-                Console.WriteLine("prevTimeChange: "+ prevTimeChange);
-                Console.WriteLine("totalTimeChange: " + totalTimeChange);
-                Console.WriteLine("patternResult: " + patternResult);
-                Console.WriteLine("timeResult: " + timeResult);*/
-
-                return Math.Pow((weight * patternResult + (1.0 - weight) * timeResult + sliderResult) / Math.Min(osuCurrent.StrainTime, osuPrevious.StrainTime), spread);            
+                return (patternResult + sliderResult) / Math.Min(osuCurrent.StrainTime, osuPrevious.StrainTime);            
             } else return 0;
         }
     }
