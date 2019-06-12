@@ -17,6 +17,11 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Preprocessing
         protected new OsuHitObject BaseObject => (OsuHitObject)base.BaseObject;
 
         /// <summary>
+        /// Distance from the end position of the previous <see cref="OsuDifficultyHitObject"/> to the start position of this <see cref="OsuDifficultyHitObject"/>.
+        /// </summary>
+        public Vector2 DistanceVector { get; private set; }
+
+        /// <summary>
         /// Normalized distance from the end position of the previous <see cref="OsuDifficultyHitObject"/> to the start position of this <see cref="OsuDifficultyHitObject"/>.
         /// </summary>
         public double JumpDistance { get; private set; }
@@ -25,6 +30,16 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Preprocessing
         /// Normalized distance between the start and end position of the previous <see cref="OsuDifficultyHitObject"/>.
         /// </summary>
         public double TravelDistance { get; private set; }
+
+        /// <summary>
+        /// The time given to go through the normalized distance between the start and end position of the previous <see cref="OsuDifficultyHitObject"/>.
+        /// </summary>
+        public double TravelTime { get; private set; }
+
+        /// <summary>
+        /// The scaling based on how large or small the <see cref="OsuHitObject">'s radius is.
+        /// </summary>
+        public float scalingFactor { get; private set; }
 
         /// <summary>
         /// Angle the player has to take to hit this <see cref="OsuDifficultyHitObject"/>.
@@ -55,7 +70,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Preprocessing
         private void setDistances()
         {
             // We will scale distances by this factor, so we can assume a uniform CircleSize among beatmaps.
-            float scalingFactor = normalized_radius / (float)BaseObject.Radius;
+            scalingFactor = normalized_radius / (float)BaseObject.Radius;
             if (BaseObject.Radius < 30)
             {
                 float smallCircleBonus = Math.Min(30 - (float)BaseObject.Radius, 5) / 50;
@@ -66,13 +81,17 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Preprocessing
             {
                 computeSliderCursorPosition(lastSlider);
                 TravelDistance = lastSlider.LazyTravelDistance * scalingFactor;
+                TravelTime = lastSlider.LazyTravelTime;
             }
 
             Vector2 lastCursorPosition = getEndCursorPosition(lastObject);
 
             // Don't need to jump to reach spinners
             if (!(BaseObject is Spinner))
-                JumpDistance = (BaseObject.StackedPosition * scalingFactor - lastCursorPosition * scalingFactor).Length;
+            {
+                DistanceVector = (BaseObject.StackedPosition * scalingFactor - lastCursorPosition * scalingFactor);
+                JumpDistance = DistanceVector.Length;
+            }
 
             if (lastLastObject != null)
             {
@@ -114,6 +133,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Preprocessing
                     dist -= approxFollowCircleRadius;
                     slider.LazyEndPosition += diff * dist;
                     slider.LazyTravelDistance += dist;
+                    slider.LazyTravelTime = t - slider.StartTime;
                 }
             });
 

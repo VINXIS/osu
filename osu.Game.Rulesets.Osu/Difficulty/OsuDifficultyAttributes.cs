@@ -7,8 +7,12 @@ namespace osu.Game.Rulesets.Osu.Difficulty
 {
     public class OsuDifficultyAttributes : DifficultyAttributes
     {
-        public double AimStrain;
+        public double JumpAimStrain;
+        public double StreamAimStrain;
+        public double StaminaStrain;
         public double SpeedStrain;
+        public double ControlStrain;
+        public double AccuracyStrain;
         public double ApproachRate;
         public double OverallDifficulty;
         public int MaxCombo;

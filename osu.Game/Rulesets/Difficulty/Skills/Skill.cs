@@ -2,6 +2,7 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using System;
+using System.IO;
 using System.Collections.Generic;
 using osu.Game.Rulesets.Difficulty.Preprocessing;
 using osu.Game.Rulesets.Difficulty.Utils;
@@ -45,13 +46,20 @@ namespace osu.Game.Rulesets.Difficulty.Skills
 
         private readonly List<double> strainPeaks = new List<double>();
 
+        private List<Tuple<double, double>> grapher = new List<Tuple<double, double>>();
+        public List<Tuple<double, double>> checkStuffOut = new List<Tuple<double, double>>();
+
         /// <summary>
         /// Process a <see cref="DifficultyHitObject"/> and update current strain values accordingly.
         /// </summary>
         public void Process(DifficultyHitObject current)
         {
             currentStrain *= strainDecay(current.DeltaTime);
+            grapher.Add(Tuple.Create(current.BaseObject.StartTime, currentStrain));
             currentStrain += StrainValueOf(current) * SkillMultiplier;
+            grapher.Add(Tuple.Create(current.BaseObject.StartTime, currentStrain));
+
+            if (this.GetType().Name == "JumpAim" && current.BaseObject.StartTime == 22593) Console.WriteLine(StrainValueOf(current));
 
             currentSectionPeak = Math.Max(currentStrain, currentSectionPeak);
 
@@ -84,6 +92,19 @@ namespace osu.Game.Rulesets.Difficulty.Skills
         /// </summary>
         public double DifficultyValue()
         {
+            using (StreamWriter outputFile = new StreamWriter(this.GetType().Name.ToLower() + ".txt"))
+            {
+                foreach (Tuple<double, double> point in grapher)
+                    outputFile.WriteLine(point);
+            }
+            if (this.GetType().Name == "Control")
+            {
+                using (StreamWriter outputFile = new StreamWriter("velocities.txt"))
+                {
+                    foreach (Tuple<double, double> point in checkStuffOut)
+                        outputFile.WriteLine(point);
+                }
+            }
             strainPeaks.Sort((a, b) => b.CompareTo(a)); // Sort from highest to lowest strain.
 
             double difficulty = 0;
