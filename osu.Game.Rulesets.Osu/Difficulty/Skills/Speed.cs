@@ -12,7 +12,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
     /// <summary>
     /// idk something lol
     /// </summary>
-    public class Speed : Skill
+    public class Speed : OsuSkill
     {
         protected override double SkillMultiplier => 3000;
         protected override double StrainDecayBase => 0.225;
