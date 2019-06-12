@@ -14,11 +14,11 @@ namespace osu.Game.Rulesets.Osu.Tests
     {
         protected override string ResourceAssembly => "osu.Game.Rulesets.Osu";
 
-        [TestCase(6.931145117263422, "diffcalc-test")]
+        [TestCase(6.8541541330983913d, "diffcalc-test")]
         public void Test(double expected, string name)
             => base.Test(expected, name);
 
-        protected override LegacyDifficultyCalculator CreateDifficultyCalculator(WorkingBeatmap beatmap) => new OsuDifficultyCalculator(new OsuRuleset(), beatmap);
+        protected override DifficultyCalculator CreateDifficultyCalculator(WorkingBeatmap beatmap) => new OsuDifficultyCalculator(new OsuRuleset(), beatmap);
 
         protected override Ruleset CreateRuleset() => new OsuRuleset();
     }

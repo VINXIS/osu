@@ -3,7 +3,7 @@
 
 using System;
 using osu.Framework.Allocation;
-using osu.Framework.Configuration;
+using osu.Framework.Bindables;
 using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Colour;
@@ -96,8 +96,8 @@ namespace osu.Game.Screens.Multi.Lounge.Components
                                                     {
                                                         Anchor = Anchor.BottomLeft,
                                                         Origin = Anchor.BottomLeft,
-                                                        TextSize = 30,
-                                                        Current = Name
+                                                        Font = OsuFont.GetFont(size: 30),
+                                                        Current = RoomName
                                                     },
                                                 },
                                             },
@@ -135,8 +135,7 @@ namespace osu.Game.Screens.Multi.Lounge.Components
                                                         AutoSizeAxes = Axes.Both,
                                                         Child = new StatusText
                                                         {
-                                                            TextSize = 14,
-                                                            Font = @"Exo2.0-Bold",
+                                                            Font = OsuFont.GetFont(weight: FontWeight.Bold, size: 14),
                                                         }
                                                     },
                                                     beatmapTypeInfo = new BeatmapTypeInfo(),
@@ -192,7 +191,7 @@ namespace osu.Game.Screens.Multi.Lounge.Components
             }
             else
             {
-                status.Value = Status;
+                status.Value = Status.Value;
 
                 participantCount.FadeIn(transition_duration);
                 beatmapTypeInfo.FadeIn(transition_duration);
@@ -215,7 +214,7 @@ namespace osu.Game.Screens.Multi.Lounge.Components
             [BackgroundDependencyLoader]
             private void load()
             {
-                status.BindValueChanged(s => Text = s.Message, true);
+                status.BindValueChanged(s => Text = s.NewValue.Message, true);
             }
         }
 
@@ -247,7 +246,7 @@ namespace osu.Game.Screens.Multi.Lounge.Components
             }
 
             [Resolved]
-            private APIAccess api { get; set; }
+            private IAPIProvider api { get; set; }
 
             private GetRoomScoresRequest request;
 
@@ -259,6 +258,7 @@ namespace osu.Game.Screens.Multi.Lounge.Components
 
                 // nice little progressive fade
                 int time = 500;
+
                 foreach (var c in fill.Children)
                 {
                     c.Delay(500 - time).FadeOut(time, Easing.Out);

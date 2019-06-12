@@ -27,6 +27,11 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Preprocessing
         public double TravelDistance { get; private set; }
 
         /// <summary>
+        /// Time taken between the start and end position of the previous <see cref="OsuDifficultyHitObject"/>.
+        /// </summary>
+        public double TravelTime { get; private set; }
+
+        /// <summary>
         /// Angle the player has to take to hit this <see cref="OsuDifficultyHitObject"/>.
         /// Calculated as the angle between the circles (current-2, current-1, current).
         /// </summary>
@@ -56,6 +61,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Preprocessing
         {
             // We will scale distances by this factor, so we can assume a uniform CircleSize among beatmaps.
             float scalingFactor = normalized_radius / (float)BaseObject.Radius;
+
             if (BaseObject.Radius < 30)
             {
                 float smallCircleBonus = Math.Min(30 - (float)BaseObject.Radius, 5) / 50;
@@ -92,6 +98,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Preprocessing
         {
             if (slider.LazyEndPosition != null)
                 return;
+
             slider.LazyEndPosition = slider.StackedPosition;
 
             float approxFollowCircleRadius = (float)(slider.Radius * 3);
@@ -114,6 +121,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Preprocessing
                     dist -= approxFollowCircleRadius;
                     slider.LazyEndPosition += diff * dist;
                     slider.LazyTravelDistance += dist;
+                    slider.LazyTravelTime = t - slider.StartTime;
                 }
             });
 
@@ -127,8 +135,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Preprocessing
         {
             Vector2 pos = hitObject.StackedPosition;
 
-            var slider = hitObject as Slider;
-            if (slider != null)
+            if (hitObject is Slider slider)
             {
                 computeSliderCursorPosition(slider);
                 pos = slider.LazyEndPosition ?? pos;

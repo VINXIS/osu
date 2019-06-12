@@ -18,7 +18,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
 {
     public class OsuDifficultyCalculator : DifficultyCalculator
     {
-        private const double difficulty_multiplier = 0.0675;
+        private const double star_rating_scale_factor = 0.975;
 
         public OsuDifficultyCalculator(Ruleset ruleset, WorkingBeatmap beatmap)
             : base(ruleset, beatmap)
@@ -27,12 +27,35 @@ namespace osu.Game.Rulesets.Osu.Difficulty
 
         protected override DifficultyAttributes CreateDifficultyAttributes(IBeatmap beatmap, Mod[] mods, Skill[] skills, double clockRate)
         {
+            var oldaim = (OsuSkill)skills[0];
+            var oldspeed = (OsuSkill)skills[1];
+            var jumpaim = (OsuSkill)skills[2];
+            var streamaim = (OsuSkill)skills[3];
+            var stamina = (OsuSkill)skills[4];
+            var speed = (OsuSkill)skills[5];
+            var control = (OsuSkill)skills[6];
+            var accuracy = (OsuSkill)skills[7];
+
             if (beatmap.HitObjects.Count == 0)
                 return new OsuDifficultyAttributes { Mods = mods };
 
-            double aimRating = Math.Sqrt(skills[0].DifficultyValue()) * difficulty_multiplier;
-            double speedRating = Math.Sqrt(skills[1].DifficultyValue()) * difficulty_multiplier;
-            double starRating = aimRating + speedRating + Math.Abs(aimRating - speedRating) / 2;
+            IList<double> aimComboSr = oldaim.ComboStarRatings;
+            IList<double> aimMissCounts = oldaim.MissCounts;
+
+            IList<double> speedComboSr = oldspeed.ComboStarRatings;
+            IList<double> speedMissCounts = oldspeed.MissCounts;
+
+            const double miss_sr_increment = OsuSkill.MISS_STAR_RATING_INCREMENT;
+
+            double oldaimRating = oldaim.Difficulty;
+            double oldspeedRating = oldspeed.Difficulty;
+            double jumpaimRating = jumpaim.Difficulty;
+            double streamaimRating = streamaim.Difficulty;
+            double staminaRating = stamina.Difficulty;
+            double speedRating = speed.Difficulty;
+            double controlRating = control.Difficulty;
+            double accuracyRating = accuracy.Difficulty;
+            double starRating = star_rating_scale_factor * (oldaimRating + oldspeedRating + Math.Abs(oldaimRating - oldspeedRating) / 2);
 
             // Todo: These int casts are temporary to achieve 1:1 results with osu!stable, and should be removed in the future
             double hitWindowGreat = (int)(beatmap.HitObjects.First().HitWindows.Great / 2) / clockRate;
@@ -46,11 +69,22 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             {
                 StarRating = starRating,
                 Mods = mods,
-                AimStrain = aimRating,
-                SpeedStrain = speedRating,
+                MissStarRatingIncrement = miss_sr_increment,
+                OldAimStrain = oldaimRating,
+                OldAimComboStarRatings = aimComboSr,
+                OldAimMissCounts = aimMissCounts,
+                OldSpeedStrain = oldspeedRating,
+                OldSpeedComboStarRatings = speedComboSr,
+                OldSpeedMissCounts = speedMissCounts,
                 ApproachRate = preempt > 1200 ? (1800 - preempt) / 120 : (1200 - preempt) / 150 + 5,
                 OverallDifficulty = (80 - hitWindowGreat) / 6,
-                MaxCombo = maxCombo
+                MaxCombo = maxCombo,
+                JumpAimStrain = jumpaimRating,
+                StreamAimStrain = streamaimRating,
+                StaminaStrain = staminaRating,
+                SpeedStrain = speedRating,
+                ControlStrain = controlRating,
+                AccuracyStrain = accuracyRating,
             };
         }
 
@@ -70,8 +104,14 @@ namespace osu.Game.Rulesets.Osu.Difficulty
 
         protected override Skill[] CreateSkills(IBeatmap beatmap) => new Skill[]
         {
-            new Aim(),
-            new Speed()
+            new OldAim(),
+            new OldSpeed(),
+            new JumpAim(),
+            new StreamAim(),
+            new Stamina(),
+            new Speed(),
+            new Control(),
+            new Accuracy()
         };
 
         protected override Mod[] DifficultyAdjustmentMods => new Mod[]

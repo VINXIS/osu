@@ -4,7 +4,7 @@
 using osu.Framework.Allocation;
 using osu.Framework.Audio;
 using osu.Framework.Audio.Sample;
-using osu.Framework.Configuration;
+using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Sprites;
 using osu.Framework.Graphics.UserInterface;
@@ -33,7 +33,7 @@ namespace osu.Game.Graphics.UserInterface
 
         public string LabelText
         {
-            get { return labelSpriteText?.Text; }
+            get => labelSpriteText?.Text;
             set
             {
                 if (labelSpriteText != null)
@@ -43,7 +43,7 @@ namespace osu.Game.Graphics.UserInterface
 
         public MarginPadding LabelPadding
         {
-            get { return labelSpriteText?.Padding ?? new MarginPadding(); }
+            get => labelSpriteText?.Padding ?? new MarginPadding();
             set
             {
                 if (labelSpriteText != null)
@@ -78,7 +78,7 @@ namespace osu.Game.Graphics.UserInterface
 
             Current.DisabledChanged += disabled =>
             {
-                Alpha = disabled ? 0.3f : 1;
+                labelSpriteText.Alpha = Nub.Alpha = disabled ? 0.3f : 1;
             };
         }
 
@@ -86,9 +86,9 @@ namespace osu.Game.Graphics.UserInterface
         {
             base.LoadComplete();
 
-            Current.ValueChanged += newValue =>
+            Current.ValueChanged += enabled =>
             {
-                if (newValue)
+                if (enabled.NewValue)
                     sampleChecked?.Play();
                 else
                     sampleUnchecked?.Play();
@@ -112,8 +112,8 @@ namespace osu.Game.Graphics.UserInterface
         [BackgroundDependencyLoader]
         private void load(AudioManager audio)
         {
-            sampleChecked = audio.Sample.Get(@"UI/check-on");
-            sampleUnchecked = audio.Sample.Get(@"UI/check-off");
+            sampleChecked = audio.Samples.Get(@"UI/check-on");
+            sampleUnchecked = audio.Samples.Get(@"UI/check-off");
         }
     }
 }

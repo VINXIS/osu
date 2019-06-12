@@ -3,16 +3,19 @@
 
 using System;
 using System.Linq;
+using System.Collections.Generic;
 using osu.Framework.Allocation;
 using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Cursor;
+using osu.Framework.Graphics.Effects;
 using osu.Framework.Graphics.UserInterface;
 using osu.Game.Graphics;
 using osu.Game.Graphics.Containers;
 using osu.Game.Graphics.Sprites;
 using osu.Game.Graphics.UserInterface;
+using osu.Game.Online.API;
 using osu.Game.Online.Chat;
 using osu.Game.Users;
 using osuTK;
@@ -87,9 +90,8 @@ namespace osu.Game.Overlays.Chat
 
             Drawable effectedUsername = username = new OsuSpriteText
             {
-                Font = @"Exo2.0-BoldItalic",
                 Colour = hasBackground ? customUsernameColour : username_colours[message.Sender.Id % username_colours.Length],
-                TextSize = TextSize,
+                Font = OsuFont.GetFont(size: TextSize, weight: FontWeight.Bold, italics: true)
             };
 
             if (hasBackground)
@@ -138,9 +140,7 @@ namespace osu.Game.Overlays.Chat
                         {
                             Anchor = Anchor.CentreLeft,
                             Origin = Anchor.CentreLeft,
-                            Font = @"Exo2.0-SemiBold",
-                            FixedWidth = true,
-                            TextSize = TextSize * 0.75f,
+                            Font = OsuFont.GetFont(size: TextSize * 0.75f, weight: FontWeight.SemiBold, fixedWidth: true)
                         },
                         new MessageSender(message.Sender)
                         {
@@ -162,13 +162,13 @@ namespace osu.Game.Overlays.Chat
                         {
                             if (Message.IsAction)
                             {
-                                t.Font = @"Exo2.0-MediumItalic";
+                                t.Font = OsuFont.GetFont(italics: true);
 
                                 if (senderHasBackground)
                                     t.Colour = OsuColour.FromHex(message.Sender.Colour);
                             }
 
-                            t.TextSize = TextSize;
+                            t.Font = t.Font.With(size: TextSize);
                         })
                         {
                             AutoSizeAxes = Axes.Y,
@@ -203,6 +203,9 @@ namespace osu.Game.Overlays.Chat
 
             private Action startChatAction;
 
+            [Resolved]
+            private IAPIProvider api { get; set; }
+
             public MessageSender(User sender)
             {
                 this.sender = sender;
@@ -215,11 +218,21 @@ namespace osu.Game.Overlays.Chat
                 startChatAction = () => chatManager?.OpenPrivateChannel(sender);
             }
 
-            public MenuItem[] ContextMenuItems => new MenuItem[]
+            public MenuItem[] ContextMenuItems
             {
-                new OsuMenuItem("View Profile", MenuItemType.Highlighted, Action),
-                new OsuMenuItem("Start Chat", MenuItemType.Standard, startChatAction),
-            };
+                get
+                {
+                    List<MenuItem> items = new List<MenuItem>
+                    {
+                        new OsuMenuItem("View Profile", MenuItemType.Highlighted, Action)
+                    };
+
+                    if (sender.Id != api.LocalUser.Value.Id)
+                        items.Add(new OsuMenuItem("Start Chat", MenuItemType.Standard, startChatAction));
+
+                    return items.ToArray();
+                }
+            }
         }
 
         private static readonly Color4[] username_colours =

@@ -1,11 +1,12 @@
 ﻿// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore.Internal;
 using osu.Framework.Allocation;
 using osu.Framework.Audio;
 using osu.Framework.Audio.Sample;
-using osu.Framework.Configuration;
+using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Input.Bindings;
 using osu.Framework.Screens;
@@ -14,6 +15,7 @@ using osu.Game.Input.Bindings;
 using osu.Game.Rulesets;
 using osu.Game.Screens.Menu;
 using osu.Game.Overlays;
+using osu.Game.Rulesets.Mods;
 
 namespace osu.Game.Screens
 {
@@ -57,20 +59,25 @@ namespace osu.Game.Screens
 
         private SampleChannel sampleExit;
 
+        protected virtual bool PlayResumeSound => true;
+
         public virtual float BackgroundParallaxAmount => 1;
 
-        public Bindable<WorkingBeatmap> Beatmap { get; set; }
+        public Bindable<WorkingBeatmap> Beatmap { get; private set; }
 
-        public Bindable<RulesetInfo> Ruleset { get; set; }
+        public Bindable<RulesetInfo> Ruleset { get; private set; }
+
+        public Bindable<IReadOnlyList<Mod>> Mods { get; private set; }
 
         protected override IReadOnlyDependencyContainer CreateChildDependencies(IReadOnlyDependencyContainer parent)
         {
-            var deps = new OsuScreenDependencies(DisallowExternalBeatmapRulesetChanges, base.CreateChildDependencies(parent));
+            var screenDependencies = new OsuScreenDependencies(DisallowExternalBeatmapRulesetChanges, parent);
 
-            Beatmap = deps.Beatmap;
-            Ruleset = deps.Ruleset;
+            Beatmap = screenDependencies.Beatmap;
+            Ruleset = screenDependencies.Ruleset;
+            Mods = screenDependencies.Mods;
 
-            return deps;
+            return base.CreateChildDependencies(screenDependencies);
         }
 
         protected BackgroundScreen Background => backgroundStack?.CurrentScreen as BackgroundScreen;
@@ -92,7 +99,7 @@ namespace osu.Game.Screens
         [BackgroundDependencyLoader(true)]
         private void load(OsuGame osu, AudioManager audio)
         {
-            sampleExit = audio.Sample.Get(@"UI/screen-back");
+            sampleExit = audio.Samples.Get(@"UI/screen-back");
         }
 
         public virtual bool OnPressed(GlobalAction action)
@@ -112,7 +119,8 @@ namespace osu.Game.Screens
 
         public override void OnResuming(IScreen last)
         {
-            sampleExit?.Play();
+            if (PlayResumeSound)
+                sampleExit?.Play();
             applyArrivingDefaults(true);
 
             base.OnResuming(last);
@@ -174,7 +182,7 @@ namespace osu.Game.Screens
             logo.FadeOut(300, Easing.OutQuint);
             logo.Anchor = Anchor.TopLeft;
             logo.Origin = Anchor.Centre;
-            logo.RelativePositionAxes = Axes.None;
+            logo.RelativePositionAxes = Axes.Both;
             logo.BeatMatching = true;
             logo.Triangles = true;
             logo.Ripple = true;

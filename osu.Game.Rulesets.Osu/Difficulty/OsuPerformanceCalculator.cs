@@ -30,6 +30,9 @@ namespace osu.Game.Rulesets.Osu.Difficulty
         private int countMeh;
         private int countMiss;
 
+        private const double miss_decay = 0.985;
+        private const double combo_weight = 0.5;
+
         public OsuPerformanceCalculator(Ruleset ruleset, WorkingBeatmap beatmap, ScoreInfo score)
             : base(ruleset, beatmap, score)
         {
@@ -63,9 +66,9 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             if (mods.Any(m => m is OsuModSpunOut))
                 multiplier *= 0.95f;
 
-            double aimValue = computeAimValue();
-            double speedValue = computeSpeedValue();
-            double accuracyValue = computeAccuracyValue();
+            double aimValue = computeAimValue(categoryRatings);
+            double speedValue = computeSpeedValue(categoryRatings);
+            double accuracyValue = computeAccuracyValue(categoryRatings);
             double totalValue =
                 Math.Pow(
                     Math.Pow(aimValue, 1.1f) +
@@ -75,9 +78,6 @@ namespace osu.Game.Rulesets.Osu.Difficulty
 
             if (categoryRatings != null)
             {
-                categoryRatings.Add("Aim", aimValue);
-                categoryRatings.Add("Speed", speedValue);
-                categoryRatings.Add("Accuracy", accuracyValue);
                 categoryRatings.Add("OD", Attributes.OverallDifficulty);
                 categoryRatings.Add("AR", Attributes.ApproachRate);
                 categoryRatings.Add("Max Combo", beatmapMaxCombo);
@@ -86,34 +86,99 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             return totalValue;
         }
 
-        private double computeAimValue()
+        private double interpComboStarRating(IList<double> values, double scoreCombo, double mapCombo)
         {
-            double rawAim = Attributes.AimStrain;
+            if (mapCombo == 0)
+            {
+                return values.Last();
+            }
+
+            double comboRatio = scoreCombo / mapCombo;
+            double pos = Math.Min(comboRatio * (values.Count), values.Count);
+            int i = (int)pos;
+
+            if (i == values.Count)
+            {
+                return values.Last();
+            }
+
+            if (pos <= 0)
+            {
+                return 0;
+            }
+
+            double ub = values[i];
+            double lb = i == 0 ? 0 : values[i - 1];
+
+            double t = pos - i;
+            double ret = lb * (1 - t) + ub * t;
+
+            return ret;
+        }
+
+        private double interpMissCountStarRating(double sr, IList<double> values, int missCount)
+        {
+            double increment = Attributes.MissStarRatingIncrement;
+            double t;
+
+            if (missCount == 0)
+            {
+                // zero misses, return SR
+                return sr;
+            }
+
+            if (missCount < values[0])
+            {
+                return sr - increment * missCount / values[0];
+            }
+
+            for (int i = 0; i < values.Count; ++i)
+            {
+                if (missCount == values[i])
+                {
+                    if (i < values.Count - 1 && missCount == values[i + 1])
+                    {
+                        // if there are duplicates, take the lowest SR that can achieve miss count
+                        continue;
+                    }
+
+                    return sr - (i + 1) * increment;
+                }
+
+                if (i < values.Count - 1 && missCount < values[i + 1])
+                {
+                    t = (missCount - values[i]) / (values[i + 1] - values[i]);
+
+                    return sr - (i + 1 + t) * increment;
+                }
+            }
+
+            // more misses than max evaluated, interpolate to zero
+            t = (missCount - values.Last()) / (beatmapMaxCombo - values.Last());
+            return (sr - values.Count * increment) * (1 - t);
+        }
+
+        private double computeAimValue(Dictionary<string, double> categoryRatings = null)
+        {
+            double aimComboStarRating = interpComboStarRating(Attributes.OldAimComboStarRatings, scoreMaxCombo, beatmapMaxCombo);
+            double aimMissCountStarRating = interpMissCountStarRating(Attributes.OldAimComboStarRatings.Last(), Attributes.OldAimMissCounts, countMiss);
+            double rawAim = Math.Pow(aimComboStarRating, combo_weight) * Math.Pow(aimMissCountStarRating, 1 - combo_weight);
 
             if (mods.Any(m => m is OsuModTouchDevice))
                 rawAim = Math.Pow(rawAim, 0.8);
 
             double aimValue = Math.Pow(5.0f * Math.Max(1.0f, rawAim / 0.0675f) - 4.0f, 3.0f) / 100000.0f;
 
-            // Longer maps are worth more
-            double lengthBonus = 0.95f + 0.4f * Math.Min(1.0f, totalHits / 2000.0f) +
-                (totalHits > 2000 ? Math.Log10(totalHits / 2000.0f) * 0.5f : 0.0f);
-
-            aimValue *= lengthBonus;
-
-            // Penalize misses exponentially. This mainly fixes tag4 maps and the likes until a per-hitobject solution is available
-            aimValue *= Math.Pow(0.97f, countMiss);
-
-            // Combo scaling
-            if (beatmapMaxCombo > 0)
-                aimValue *= Math.Min(Math.Pow(scoreMaxCombo, 0.8f) / Math.Pow(beatmapMaxCombo, 0.8f), 1.0f);
+            // discourage misses
+            aimValue *= Math.Pow(miss_decay, countMiss);
 
             double approachRateFactor = 1.0f;
+
             if (Attributes.ApproachRate > 10.33f)
                 approachRateFactor += 0.3f * (Attributes.ApproachRate - 10.33f);
             else if (Attributes.ApproachRate < 8.0f)
             {
-                    approachRateFactor += 0.01f * (8.0f - Attributes.ApproachRate);
+                approachRateFactor += 0.01f * (8.0f - Attributes.ApproachRate);
             }
 
             aimValue *= approachRateFactor;
@@ -126,8 +191,10 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             {
                 // Apply object-based bonus for flashlight.
                 aimValue *= 1.0f + 0.35f * Math.Min(1.0f, totalHits / 200.0f) +
-                        (totalHits > 200 ? 0.3f * Math.Min(1.0f, (totalHits - 200) / 300.0f) +
-                        (totalHits > 500 ? (totalHits - 500) / 1200.0f : 0.0f) : 0.0f);
+                            (totalHits > 200
+                                ? 0.3f * Math.Min(1.0f, (totalHits - 200) / 300.0f) +
+                                  (totalHits > 500 ? (totalHits - 500) / 1200.0f : 0.0f)
+                                : 0.0f);
             }
 
             // Scale the aim value with accuracy _slightly_
@@ -135,23 +202,26 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             // It is important to also consider accuracy difficulty when doing that
             aimValue *= 0.98f + Math.Pow(Attributes.OverallDifficulty, 2) / 2500;
 
+            if (categoryRatings != null)
+            {
+                categoryRatings.Add("Aim", aimValue);
+                categoryRatings.Add("Aim Combo Stars", aimComboStarRating);
+                categoryRatings.Add("Aim Miss Count Stars", aimMissCountStarRating);
+            }
+
             return aimValue;
         }
 
-        private double computeSpeedValue()
+        private double computeSpeedValue(Dictionary<string, double> categoryRatings = null)
         {
-            double speedValue = Math.Pow(5.0f * Math.Max(1.0f, Attributes.SpeedStrain / 0.0675f) - 4.0f, 3.0f) / 100000.0f;
+            double speedComboStarRating = interpComboStarRating(Attributes.OldSpeedComboStarRatings, scoreMaxCombo, beatmapMaxCombo);
+            double speedMissCountStarRating = interpMissCountStarRating(Attributes.OldSpeedComboStarRatings.Last(), Attributes.OldSpeedMissCounts, countMiss);
+            double rawSpeed = Math.Pow(speedComboStarRating, combo_weight) * Math.Pow(speedMissCountStarRating, 1 - combo_weight);
 
-            // Longer maps are worth more
-            speedValue *= 0.95f + 0.4f * Math.Min(1.0f, totalHits / 2000.0f) +
-                (totalHits > 2000 ? Math.Log10(totalHits / 2000.0f) * 0.5f : 0.0f);
+            double speedValue = Math.Pow(5.0f * Math.Max(1.0f, rawSpeed / 0.0675f) - 4.0f, 3.0f) / 100000.0f;
 
-            // Penalize misses exponentially. This mainly fixes tag4 maps and the likes until a per-hitobject solution is available
-            speedValue *= Math.Pow(0.97f, countMiss);
-
-            // Combo scaling
-            if (beatmapMaxCombo > 0)
-                speedValue *= Math.Min(Math.Pow(scoreMaxCombo, 0.8f) / Math.Pow(beatmapMaxCombo, 0.8f), 1.0f);
+            // discourage misses
+            speedValue *= Math.Pow(miss_decay, countMiss);
 
             double approachRateFactor = 1.0f;
             if (Attributes.ApproachRate > 10.33f)
@@ -167,10 +237,17 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             // It is important to also consider accuracy difficulty when doing that
             speedValue *= 0.96f + Math.Pow(Attributes.OverallDifficulty, 2) / 1600;
 
+            if (categoryRatings != null)
+            {
+                categoryRatings.Add("Speed", speedValue);
+                categoryRatings.Add("Speed Combo Stars", speedComboStarRating);
+                categoryRatings.Add("Speed Miss Count Stars", speedMissCountStarRating);
+            }
+
             return speedValue;
         }
 
-        private double computeAccuracyValue()
+        private double computeAccuracyValue(Dictionary<string, double> categoryRatings = null)
         {
             // This percentage only considers HitCircles of any value - in this part of the calculation we focus on hitting the timing hit window
             double betterAccuracyPercentage;
@@ -196,6 +273,8 @@ namespace osu.Game.Rulesets.Osu.Difficulty
                 accuracyValue *= 1.08f;
             if (mods.Any(m => m is OsuModFlashlight))
                 accuracyValue *= 1.02f;
+
+            categoryRatings?.Add("Accuracy", accuracyValue);
 
             return accuracyValue;
         }

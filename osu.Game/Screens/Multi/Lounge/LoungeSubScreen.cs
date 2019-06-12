@@ -2,7 +2,7 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using osu.Framework.Allocation;
-using osu.Framework.Configuration;
+using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Input.Events;
@@ -105,6 +105,14 @@ namespace osu.Game.Screens.Multi.Lounge
         {
             base.OnSuspending(next);
             Filter.Search.HoldFocus = false;
+        }
+
+        public override void OnResuming(IScreen last)
+        {
+            base.OnResuming(last);
+
+            if (currentRoom.Value?.RoomID.Value == null)
+                currentRoom.Value = new Room();
         }
 
         private void joinRequested(Room room)

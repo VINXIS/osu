@@ -3,7 +3,7 @@
 
 using System;
 using osu.Framework.Allocation;
-using osu.Framework.Configuration;
+using osu.Framework.Bindables;
 using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Colour;
@@ -13,6 +13,7 @@ using osu.Game.Beatmaps.Drawables;
 using osu.Game.Graphics;
 using osu.Game.Online.Multiplayer;
 using osu.Game.Overlays.SearchableList;
+using osu.Game.Rulesets.Mods;
 using osu.Game.Screens.Multi.Components;
 using osu.Game.Screens.Play.HUD;
 using osuTK;
@@ -108,7 +109,7 @@ namespace osu.Game.Screens.Multi.Match.Components
                 },
             };
 
-            CurrentItem.BindValueChanged(i => modDisplay.Current.Value = i?.RequiredMods, true);
+            CurrentItem.BindValueChanged(item => modDisplay.Current.Value = item.NewValue?.RequiredMods?.ToArray() ?? Array.Empty<Mod>(), true);
 
             beatmapButton.Action = () => RequestBeatmapSelection?.Invoke();
         }
@@ -126,7 +127,7 @@ namespace osu.Game.Screens.Multi.Match.Components
             [BackgroundDependencyLoader]
             private void load()
             {
-                roomId.BindValueChanged(v => this.FadeTo(v.HasValue ? 0 : 1), true);
+                roomId.BindValueChanged(id => this.FadeTo(id.NewValue.HasValue ? 0 : 1), true);
             }
         }
 
@@ -136,7 +137,7 @@ namespace osu.Game.Screens.Multi.Match.Components
 
             private class BackgroundSprite : UpdateableBeatmapBackgroundSprite
             {
-                protected override double FadeDuration => 200;
+                protected override double TransformDuration => 200;
             }
         }
     }

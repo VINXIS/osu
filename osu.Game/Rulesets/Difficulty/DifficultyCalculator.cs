@@ -4,26 +4,60 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using osu.Framework.Extensions.IEnumerableExtensions;
+using osu.Framework.Timing;
 using osu.Game.Beatmaps;
 using osu.Game.Rulesets.Difficulty.Preprocessing;
 using osu.Game.Rulesets.Difficulty.Skills;
 using osu.Game.Rulesets.Mods;
+using osu.Game.Rulesets.Objects;
 
 namespace osu.Game.Rulesets.Difficulty
 {
-    public abstract class DifficultyCalculator : LegacyDifficultyCalculator
+    public abstract class DifficultyCalculator
     {
-        /// <summary>
-        /// The length of each strain section.
-        /// </summary>
-        protected virtual int SectionLength => 400;
+        private readonly Ruleset ruleset;
+        private readonly WorkingBeatmap beatmap;
 
         protected DifficultyCalculator(Ruleset ruleset, WorkingBeatmap beatmap)
-            : base(ruleset, beatmap)
         {
+            this.ruleset = ruleset;
+            this.beatmap = beatmap;
         }
 
-        protected override DifficultyAttributes Calculate(IBeatmap beatmap, Mod[] mods, double clockRate)
+        /// <summary>
+        /// Calculates the difficulty of the beatmap using a specific mod combination.
+        /// </summary>
+        /// <param name="mods">The mods that should be applied to the beatmap.</param>
+        /// <returns>A structure describing the difficulty of the beatmap.</returns>
+        public DifficultyAttributes Calculate(params Mod[] mods)
+        {
+            mods = mods.Select(m => m.CreateCopy()).ToArray();
+
+            IBeatmap playableBeatmap = beatmap.GetPlayableBeatmap(ruleset.RulesetInfo, mods);
+
+            var clock = new StopwatchClock();
+            mods.OfType<IApplicableToClock>().ForEach(m => m.ApplyToClock(clock));
+
+            return calculate(playableBeatmap, mods, clock.Rate);
+        }
+
+        /// <summary>
+        /// Calculates the difficulty of the beatmap using all mod combinations applicable to the beatmap.
+        /// </summary>
+        /// <returns>A collection of structures describing the difficulty of the beatmap for each mod combination.</returns>
+        public IEnumerable<DifficultyAttributes> CalculateAll()
+        {
+            foreach (var combination in CreateDifficultyAdjustmentModCombinations())
+            {
+                if (combination is MultiMod multi)
+                    yield return Calculate(multi.Mods);
+                else
+                    yield return Calculate(combination);
+            }
+        }
+
+        private DifficultyAttributes calculate(IBeatmap beatmap, Mod[] mods, double clockRate)
         {
             var skills = CreateSkills(beatmap);
 
@@ -32,31 +66,16 @@ namespace osu.Game.Rulesets.Difficulty
 
             var difficultyHitObjects = CreateDifficultyHitObjects(beatmap, clockRate).OrderBy(h => h.BaseObject.StartTime).ToList();
 
-            double sectionLength = SectionLength * clockRate;
-
-            // The first object doesn't generate a strain, so we begin with an incremented section end
-            double currentSectionEnd = Math.Ceiling(beatmap.HitObjects.First().StartTime / sectionLength) * sectionLength;
-
             foreach (DifficultyHitObject h in difficultyHitObjects)
             {
-                while (h.BaseObject.StartTime > currentSectionEnd)
-                {
-                    foreach (Skill s in skills)
-                    {
-                        s.SaveCurrentPeak();
-                        s.StartNewSectionFrom(currentSectionEnd);
-                    }
-
-                    currentSectionEnd += sectionLength;
-                }
-
                 foreach (Skill s in skills)
                     s.Process(h);
             }
 
-            // The peak strain will not be saved for the last section in the above loop
             foreach (Skill s in skills)
-                s.SaveCurrentPeak();
+            {
+                s.Calculate();
+            }
 
             return CreateDifficultyAttributes(beatmap, mods, skills, clockRate);
         }
@@ -66,7 +85,7 @@ namespace osu.Game.Rulesets.Difficulty
         /// </summary>
         public Mod[] CreateDifficultyAdjustmentModCombinations()
         {
-            return createDifficultyAdjustmentModCombinations(Enumerable.Empty<Mod>(), DifficultyAdjustmentMods).ToArray();
+            return createDifficultyAdjustmentModCombinations(Array.Empty<Mod>(), DifficultyAdjustmentMods).ToArray();
 
             IEnumerable<Mod> createDifficultyAdjustmentModCombinations(IEnumerable<Mod> currentSet, Mod[] adjustmentSet, int currentSetCount = 0, int adjustmentSetStart = 0)
             {
@@ -75,12 +94,17 @@ namespace osu.Game.Rulesets.Difficulty
                     case 0:
                         // Initial-case: Empty current set
                         yield return new ModNoMod();
+
                         break;
+
                     case 1:
                         yield return currentSet.Single();
+
                         break;
+
                     default:
                         yield return new MultiMod(currentSet.ToArray());
+
                         break;
                 }
 
@@ -123,7 +147,7 @@ namespace osu.Game.Rulesets.Difficulty
         /// <summary>
         /// Creates the <see cref="Skill"/>s to calculate the difficulty of an <see cref="IBeatmap"/>.
         /// </summary>
-        /// <param name="beatmap">The <see cref="IBeatmap"/> whose difficulty will be calculated.</param
+        /// <param name="beatmap">The <see cref="IBeatmap"/> whose difficulty will be calculated.</param>
         /// <returns>The <see cref="Skill"/>s.</returns>
         protected abstract Skill[] CreateSkills(IBeatmap beatmap);
     }
