@@ -12,7 +12,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
         public double StaminaStrain;
         public double SpeedStrain;
         public double ControlStrain;
-        public double AccuracyStrain;
+        public double RhythmStrain;
         public double ApproachRate;
         public double OverallDifficulty;
         public int MaxCombo;
