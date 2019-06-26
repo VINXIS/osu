@@ -110,7 +110,6 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
 #endif
 
             double powDifficulty = Math.Pow(stars, starBonusK);
-            if (this.GetType().Name == "JumpAim" && current.StartTime == 22593) Console.WriteLine(StrainValueOf(current));
 
             // add zero difficulty notes corresponding to slider ticks/slider ends so combo is reflected properly
             // (slider difficulty is currently handled in the following note)

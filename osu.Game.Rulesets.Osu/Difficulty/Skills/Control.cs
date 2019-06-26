@@ -26,7 +26,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
             var osuCurrent = (OsuDifficultyHitObject)current;
 
             double currVel = osuCurrent.JumpDistance / osuCurrent.StrainTime;
-            double sliderVel = osuCurrent.TravelTime == 0 ? 0 : osuCurrent.TravelDistance / osuCurrent.TravelTime;
+            double sliderVel = osuCurrent.TravelDistance / osuCurrent.TravelTime;
             double jumpAwk = 0;
             double angleAwk = 0;
             double jumpNorm = 0;
@@ -57,9 +57,9 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                 jumpNorm = Math.Pow(Math.Sin((Math.PI / 2.0) * (osuCurrent.JumpDistance / 125)), 2.0);
 
             if (currVel > 1.0)
-                return Math.Sqrt(currVel) * (Math.Max(angleAwk, jumpAwk) + angleBonus + Math.Sqrt(sliderVel) + angleAwk * jumpAwk) * jumpNorm;
+                return Math.Sqrt(currVel) * (Math.Max(angleAwk, jumpAwk) + angleBonus + sliderVel + angleAwk * jumpAwk) * jumpNorm;
             else
-                return currVel * (Math.Max(angleAwk, jumpAwk) + angleBonus + Math.Sqrt(sliderVel) + angleAwk * jumpAwk) * jumpNorm;
+                return currVel * (Math.Max(angleAwk, jumpAwk) + angleBonus + sliderVel + angleAwk * jumpAwk) * jumpNorm;
         }
     }
 }

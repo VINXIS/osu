@@ -34,7 +34,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             var stamina = (OsuSkill)skills[4];
             var speed = (OsuSkill)skills[5];
             var control = (OsuSkill)skills[6];
-            var accuracy = (OsuSkill)skills[7];
+            var rhythm = (OsuSkill)skills[7];
 
             if (beatmap.HitObjects.Count == 0)
                 return new OsuDifficultyAttributes { Mods = mods };
@@ -54,7 +54,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             double staminaRating = stamina.Difficulty;
             double speedRating = speed.Difficulty;
             double controlRating = control.Difficulty;
-            double accuracyRating = accuracy.Difficulty;
+            double rhythmRating = rhythm.Difficulty;
             double starRating = star_rating_scale_factor * (oldaimRating + oldspeedRating + Math.Abs(oldaimRating - oldspeedRating) / 2);
 
             // Todo: These int casts are temporary to achieve 1:1 results with osu!stable, and should be removed in the future
@@ -84,7 +84,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
                 StaminaStrain = staminaRating,
                 SpeedStrain = speedRating,
                 ControlStrain = controlRating,
-                AccuracyStrain = accuracyRating,
+                RhythmStrain = rhythmRating,
             };
         }
 
@@ -111,7 +111,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             new Stamina(),
             new Speed(),
             new Control(),
-            new Accuracy()
+            new Rhythm()
         };
 
         protected override Mod[] DifficultyAdjustmentMods => new Mod[]

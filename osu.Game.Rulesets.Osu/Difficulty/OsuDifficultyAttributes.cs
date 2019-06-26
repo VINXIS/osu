@@ -30,9 +30,9 @@ namespace osu.Game.Rulesets.Osu.Difficulty
         public IList<double> ControlComboStarRatings;
         public IList<double> ControlMissCounts;
 
-        public double AccuracyStrain;
-        public IList<double> AccuracyComboStarRatings;
-        public IList<double> AccuracyMissCounts;
+        public double RhythmStrain;
+        public IList<double> RhythmComboStarRatings;
+        public IList<double> RhythmMissCounts;
         
         public double OldAimStrain;
         public IList<double> OldAimComboStarRatings;

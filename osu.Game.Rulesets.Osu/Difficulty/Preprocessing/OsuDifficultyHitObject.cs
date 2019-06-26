@@ -27,7 +27,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Preprocessing
         public double TravelDistance { get; private set; }
 
         /// <summary>
-        /// Time taken between the start and end position of the previous <see cref="OsuDifficultyHitObject"/>.
+        /// The time given to go through the normalized distance between the start and end position of the previous <see cref="OsuDifficultyHitObject"/>.
         /// </summary>
         public double TravelTime { get; private set; }
 
@@ -55,13 +55,13 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Preprocessing
 
             // Every strain interval is hard capped at the equivalent of 375 BPM streaming speed as a safety measure
             StrainTime = Math.Max(50, DeltaTime);
+            TravelTime = Math.Max(50, TravelTime);
         }
 
         private void setDistances()
         {
             // We will scale distances by this factor, so we can assume a uniform CircleSize among beatmaps.
             float scalingFactor = normalized_radius / (float)BaseObject.Radius;
-
             if (BaseObject.Radius < 30)
             {
                 float smallCircleBonus = Math.Min(30 - (float)BaseObject.Radius, 5) / 50;
@@ -72,6 +72,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Preprocessing
             {
                 computeSliderCursorPosition(lastSlider);
                 TravelDistance = lastSlider.LazyTravelDistance * scalingFactor;
+                TravelTime = lastSlider.LazyTravelTime;
             }
 
             Vector2 lastCursorPosition = getEndCursorPosition(lastObject);
@@ -98,7 +99,6 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Preprocessing
         {
             if (slider.LazyEndPosition != null)
                 return;
-
             slider.LazyEndPosition = slider.StackedPosition;
 
             float approxFollowCircleRadius = (float)(slider.Radius * 3);
@@ -135,7 +135,8 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Preprocessing
         {
             Vector2 pos = hitObject.StackedPosition;
 
-            if (hitObject is Slider slider)
+            var slider = hitObject as Slider;
+            if (slider != null)
             {
                 computeSliderCursorPosition(slider);
                 pos = slider.LazyEndPosition ?? pos;
