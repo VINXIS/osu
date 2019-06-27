@@ -55,7 +55,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
                 return 0;
 
             // Custom multipliers for NoFail and SpunOut.
-            double multiplier = 1.12f; // This is being adjusted to keep the final pp value scaled around what it used to be when changing things
+            double multiplier = 1.0f; // This is being adjusted to keep the final pp value scaled around what it used to be when changing things
 
             if (mods.Any(m => m is OsuModNoFail))
                 multiplier *= 0.90f;
@@ -76,7 +76,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
                     Math.Pow(staminaValue, 1.1f) +
                     Math.Pow(speedValue, 1.1f) +
                     Math.Pow(controlValue, 1.1f) +
-                    Math.Pow(accuracyValue, 1.1f), 1.0f / 1.2f
+                    Math.Pow(accuracyValue, 1.1f), 1.0f / 1.21f
                 ) * multiplier;
 
             if (categoryRatings != null)
@@ -100,7 +100,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             double rawAim = Attributes.JumpAimStrain;
 
             if (mods.Any(m => m is OsuModTouchDevice))
-                rawAim = Math.Pow(rawAim, 0.8);
+                rawAim = Math.Pow(rawAim, 0.75f);
 
             double jumpAimValue = Math.Pow(5.0f * Math.Max(1.0f, rawAim / 0.0675f) - 4.0f, 3.0f) / 100000.0f;
 
@@ -108,7 +108,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             jumpAimValue *= 0.95f + 0.4f * Math.Min(1.0f, totalHits / 2000.0f) +
                 (totalHits > 2000 ? Math.Log10(totalHits / 2000.0f) * 0.5f : 0.0f);
 
-            // Penalize misses exponentially. This mainly fixes tag4 maps and the likes until a per-hitobject solution is available
+            // Penalize misses exponentially.
             jumpAimValue *= Math.Pow(0.95f, countMiss);
 
             // Combo scaling
@@ -127,7 +127,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
 
             // We want to give more reward for lower AR when it comes to aim and HD. This nerfs high AR and buffs lower AR.
             if (mods.Any(h => h is OsuModHidden))
-                jumpAimValue *= 1.0f + 0.02f * (12.0f - Attributes.ApproachRate);
+                jumpAimValue *= Math.Max(1.0f, 1.0f + 0.04f * (9.0f - Attributes.ApproachRate));
 
             if (mods.Any(h => h is OsuModFlashlight))
             {
@@ -137,8 +137,8 @@ namespace osu.Game.Rulesets.Osu.Difficulty
                         (totalHits > 500 ? (totalHits - 500) / 1200.0f : 0.0f) : 0.0f);
             }
 
-            // Scale the aim value with accuracy _slightly_
-            jumpAimValue *= 0.5f + accuracy / 2.0f;
+            // Scale the jumpaim value with accuracy
+            jumpAimValue *= 0.75f + accuracy / 4.0f;
             // It is important to also consider accuracy difficulty when doing that
             jumpAimValue *= 0.98f + Math.Pow(Attributes.OverallDifficulty, 2) / 2500;
 
@@ -150,7 +150,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             double rawStreamAim = Attributes.StreamAimStrain;
 
             if (mods.Any(m => m is OsuModTouchDevice))
-                rawStreamAim = Math.Pow(rawStreamAim, 1.1);
+                rawStreamAim = Math.Pow(rawStreamAim, 1.25f);
 
             double streamAimValue = Math.Pow(5.0f * Math.Max(1.0f, rawStreamAim / 0.0675f) - 4.0f, 3.0f) / 100000.0f;
 
@@ -158,7 +158,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             streamAimValue *= 0.95f + 0.4f * Math.Min(1.0f, totalHits / 2000.0f) +
                 (totalHits > 2000 ? Math.Log10(totalHits / 2000.0f) * 0.5f : 0.0f);
             
-            // Penalize misses exponentially. This mainly fixes tag4 maps and the likes until a per-hitobject solution is available
+            // Penalize misses exponentially.
             streamAimValue *= Math.Pow(0.95f, countMiss);
 
             // Combo scaling
@@ -173,9 +173,17 @@ namespace osu.Game.Rulesets.Osu.Difficulty
 
             if (mods.Any(m => m is OsuModHidden))
                 streamAimValue *= 1.0f + 0.08f * (12.0f - Attributes.ApproachRate);
+            
+            if (mods.Any(h => h is OsuModFlashlight))
+            {
+                // Apply object-based bonus for flashlight.
+                streamAimValue *= 1.0f + (0.35f * Math.Min(1.0f, totalHits / 200.0f) +
+                        (totalHits > 200 ? 0.3f * Math.Min(1.0f, (totalHits - 200) / 300.0f) +
+                        (totalHits > 500 ? (totalHits - 500) / 1200.0f : 0.0f) : 0.0f)) / 2.0f;
+            }
 
-            // Scale the aim value with accuracy _slightly_
-            streamAimValue *= 0.5f + accuracy / 2.0f;
+            // Scale the streamaim value with accuracy
+            streamAimValue *= 0.75f + accuracy / 4.0f;
             // It is important to also consider accuracy difficulty when doing that
             streamAimValue *= 0.98f + Math.Pow(Attributes.OverallDifficulty, 2) / 2500;
 
@@ -187,7 +195,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             double rawControl = Attributes.ControlStrain;
 
             if (mods.Any(m => m is OsuModTouchDevice))
-                rawControl = Math.Pow(rawControl, 0.8);
+                rawControl = Math.Pow(rawControl, 0.75f);
     
             double controlValue = Math.Pow(5.0f * Math.Max(1.0f, rawControl / 0.0675f) - 4.0f, 3.0f) / 100000.0f;
 
@@ -195,7 +203,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             controlValue *= 0.95f + 0.4f * Math.Min(1.0f, totalHits / 2000.0f) +
                 (totalHits > 2000 ? Math.Log10(totalHits / 2000.0f) * 0.5f : 0.0f);
 
-            // Penalize misses exponentially. This mainly fixes tag4 maps and the likes until a per-hitobject solution is available
+            // Penalize misses exponentially.
             controlValue *= Math.Pow(0.95f, countMiss);
 
             // Combo scaling
@@ -211,8 +219,16 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             if (mods.Any(m => m is OsuModHidden))
                 controlValue *= 1.0f + 0.08f * (12.0f - Attributes.ApproachRate);
 
-            // Scale the aim value with accuracy _slightly_
-            controlValue *= 0.5f + accuracy / 2.0f;
+            if (mods.Any(h => h is OsuModFlashlight))
+            {
+                // Apply object-based bonus for flashlight.
+                controlValue *= 1.0f + 0.35f * Math.Min(1.0f, totalHits / 200.0f) +
+                        (totalHits > 200 ? 0.3f * Math.Min(1.0f, (totalHits - 200) / 300.0f) +
+                        (totalHits > 500 ? (totalHits - 500) / 1200.0f : 0.0f) : 0.0f);
+            }
+
+            // Scale the control value with accuracy
+            controlValue *= 0.75f + accuracy / 4.0f;
             // It is important to also consider accuracy difficulty when doing that
             controlValue *= 0.98f + Math.Pow(Attributes.OverallDifficulty, 2) / 2500;
 
@@ -223,54 +239,41 @@ namespace osu.Game.Rulesets.Osu.Difficulty
         {
             double staminaValue = Math.Pow(5.0f * Math.Max(1.0f, Attributes.StaminaStrain / 0.0675f) - 4.0f, 3.0f) / 100000.0f;
 
-            // Penalize misses exponentially. This mainly fixes tag4 maps and the likes until a per-hitobject solution is available
-            staminaValue *= Math.Pow(0.97f, countMiss);
+            // Penalize misses exponentially.
+            staminaValue *= Math.Pow(0.99f, countMiss);
 
             // Combo scaling
             if (beatmapMaxCombo > 0)
                 staminaValue *= Math.Min(Math.Pow(scoreMaxCombo, 0.8f) / Math.Pow(beatmapMaxCombo, 0.8f), 1.0f);
 
-            double approachRateFactor = 1.0f;
-            if (Attributes.ApproachRate > 10.33f)
-                approachRateFactor += 0.3f * (Attributes.ApproachRate - 10.33f);
-
-            staminaValue *= approachRateFactor;
-
-            if (mods.Any(m => m is OsuModHidden))
-                staminaValue *= 1.0f + 0.08f * (12.0f - Attributes.ApproachRate);
-
-            // Scale the aim value with accuracy _slightly_
-            staminaValue *= 0.5f + accuracy / 2.0f;
+            // Scale the aim value with accuracy
+            staminaValue *= accuracy + 0.02f / 0.98f;
             // It is important to also consider accuracy difficulty when doing that
-            staminaValue *= 1.0f + Math.Pow(Attributes.OverallDifficulty, 2) / 2000;
+            staminaValue *= 1.0f + Math.Pow(Attributes.OverallDifficulty, 2) / 2500;
 
             return staminaValue;
         }
 
         private double computeSpeedValue()
         {
-            double speedValue = Math.Pow(5.0f * Math.Max(1.0f, Attributes.SpeedStrain / 0.0675f) - 4.0f, 3.0f) / 100000.0f;
+            double rawSpeed = Attributes.SpeedStrain;
 
-            // Penalize misses exponentially. This mainly fixes tag4 maps and the likes until a per-hitobject solution is available
-            speedValue *= Math.Pow(0.97f, countMiss);
+            if (mods.Any(m => m is OsuModTouchDevice))
+                rawSpeed = Math.Pow(rawSpeed, 1.25f);
+
+            double speedValue = Math.Pow(5.0f * Math.Max(1.0f, rawSpeed / 0.0675f) - 4.0f, 3.0f) / 100000.0f;
+
+            // Penalize misses exponentially.
+            speedValue *= Math.Pow(0.99f, countMiss);
 
             // Combo scaling
             if (beatmapMaxCombo > 0)
                 speedValue *= Math.Min(Math.Pow(scoreMaxCombo, 0.8f) / Math.Pow(beatmapMaxCombo, 0.8f), 1.0f);
 
-            double approachRateFactor = 1.0f;
-            if (Attributes.ApproachRate > 10.33f)
-                approachRateFactor += 0.3f * (Attributes.ApproachRate - 10.33f);
-
-            speedValue *= approachRateFactor;
-
-            if (mods.Any(m => m is OsuModHidden))
-                speedValue *= 1.0f + 0.08f * (12.0f - Attributes.ApproachRate);
-
-            // Scale the aim value with accuracy _slightly_
-            speedValue *= 0.5f + accuracy / 2.0f;
+            // Scale the aim value with accuracy
+            speedValue *= accuracy + 0.02f / 0.98f;
             // It is important to also consider accuracy difficulty when doing that
-            speedValue *= 1.0f + Math.Pow(Attributes.OverallDifficulty, 2) / 2000;
+            speedValue *= 1.0f + Math.Pow(Attributes.OverallDifficulty, 2) / 2500;
 
             return speedValue;
         }
@@ -298,6 +301,12 @@ namespace osu.Game.Rulesets.Osu.Difficulty
 
             // Bonus for many hitcircles - it's harder to keep good accuracy up for longer
             accuracyValue *= Math.Min(1.15f, Math.Pow(amountHitObjectsWithAccuracy / 1000.0f, 0.3f));
+
+            double approachRateFactor = 1.0f;
+            if (Attributes.ApproachRate > 10.33f)
+                approachRateFactor += 0.3f * (Attributes.ApproachRate - 10.33f);
+
+            accuracyValue *= approachRateFactor;
 
             if (mods.Any(m => m is OsuModHidden))
                 accuracyValue *= 1.08f;
