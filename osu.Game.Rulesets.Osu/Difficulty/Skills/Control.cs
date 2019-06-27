@@ -16,7 +16,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
     public class Control : OsuSkill
     {
         protected override double SkillMultiplier => 40;
-        protected override double StrainDecayBase => 0.45;
+        protected override double StrainDecayBase => 0.35;
 
         protected override double StrainValueOf(DifficultyHitObject current)
         {
@@ -31,6 +31,11 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
             double angleAwk = 0;
             double jumpNorm = 0;
             double angleBonus = 0;
+            
+            if (osuCurrent.JumpDistance > 125)
+                jumpNorm = 1.0;
+            else 
+                jumpNorm = Math.Pow(Math.Sin((Math.PI / 2.0) * (osuCurrent.JumpDistance / 125)), 2.0);
 
             if (Previous.Count > 0)
             {
@@ -50,11 +55,6 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                 else 
                     jumpAwk = Math.Pow(Math.Sin((Math.PI / 2.0) * (Math.Abs(currVel - prevVel) / Math.Max(geoVel, 0.75))), 2.0);
             }
-
-            if (osuCurrent.JumpDistance > 125)
-                jumpNorm = 1.0;
-            else 
-                jumpNorm = Math.Pow(Math.Sin((Math.PI / 2.0) * (osuCurrent.JumpDistance / 125)), 2.0);
 
             if (currVel > 1.0)
                 return Math.Sqrt(currVel) * (Math.Max(angleAwk, jumpAwk) + angleBonus + sliderVel + angleAwk * jumpAwk) * jumpNorm;
