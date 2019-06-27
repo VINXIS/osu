@@ -55,7 +55,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
                 return 0;
 
             // Custom multipliers for NoFail and SpunOut.
-            double multiplier = 1.0f; // This is being adjusted to keep the final pp value scaled around what it used to be when changing things
+            double multiplier = 1.12f; // This is being adjusted to keep the final pp value scaled around what it used to be when changing things
 
             if (mods.Any(m => m is OsuModNoFail))
                 multiplier *= 0.90f;
@@ -76,7 +76,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
                     Math.Pow(staminaValue, 1.1f) +
                     Math.Pow(speedValue, 1.1f) +
                     Math.Pow(controlValue, 1.1f) +
-                    Math.Pow(accuracyValue, 1.1f), 1.0f / 1.21f
+                    Math.Pow(accuracyValue, 1.1f), 1.0f / 1.1f
                 ) * multiplier;
 
             if (categoryRatings != null)

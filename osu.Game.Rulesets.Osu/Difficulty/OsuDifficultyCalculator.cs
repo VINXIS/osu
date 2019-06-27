@@ -2,6 +2,7 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using osu.Game.Beatmaps;
@@ -18,7 +19,10 @@ namespace osu.Game.Rulesets.Osu.Difficulty
 {
     public class OsuDifficultyCalculator : DifficultyCalculator
     {
-        private const double difficulty_multiplier = 0.0675;
+        private const double difficulty_multiplier = 0.06;
+
+        private const double aim_increase_percentage = 0.15;
+        private const double speed_increase_percentage = 0.05;
 
         public OsuDifficultyCalculator(Ruleset ruleset, WorkingBeatmap beatmap)
             : base(ruleset, beatmap)
@@ -36,7 +40,26 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             double speedRating = Math.Sqrt(skills[3].DifficultyValue()) * difficulty_multiplier;
             double controlRating = Math.Sqrt(skills[4].DifficultyValue()) * difficulty_multiplier;
             double rhythmRating = Math.Sqrt(skills[5].DifficultyValue()) * difficulty_multiplier;
-            double starRating = Math.Sqrt(jumpAimRating * streamAimRating) + Math.Sqrt(staminaRating * speedRating) + Math.Abs(Math.Sqrt(jumpAimRating * streamAimRating) - Math.Sqrt(staminaRating * speedRating));
+
+            double skill_factor_aim = Math.Log(2.0) / (aim_increase_percentage * (jumpAimRating + controlRating) / 2.0);
+            double skill_factor_speed = Math.Log(2.0) / (speed_increase_percentage * (speedRating + streamAimRating + staminaRating) / 3.0);
+
+            double totalAim = Math.Log(Math.Pow(Math.E, skill_factor_aim * jumpAimRating) + Math.Pow(Math.E, skill_factor_aim * controlRating)) / skill_factor_aim;
+            double totalSpeed = Math.Log(Math.Pow(Math.E, skill_factor_speed * staminaRating) + Math.Pow(Math.E, skill_factor_speed * streamAimRating) + Math.Pow(Math.E, skill_factor_speed * speedRating)) / skill_factor_speed;
+            double starRating = totalAim + totalSpeed;
+
+            string values = "Jump Aim: " + Math.Round(jumpAimRating, 2) +
+            "\nStream Aim: " + Math.Round(streamAimRating, 2) + 
+            "\nStamina: " + Math.Round(staminaRating, 2) + 
+            "\nSpeed: " + Math.Round(speedRating, 2) + 
+            "\nControl: " + Math.Round(controlRating, 2) + 
+            "\nRhythm: " + Math.Round(rhythmRating, 2) +
+            "\nAim SR: " + Math.Round(totalAim, 2) +
+            "\nSpeed SR: " + Math.Round(totalSpeed, 2) +
+            "\nSR: " + Math.Round(starRating, 2);
+
+            using (StreamWriter outputFile = new StreamWriter("values.txt"))
+                outputFile.WriteLine(values);
 
             // Todo: These int casts are temporary to achieve 1:1 results with osu!stable, and should be removed in the future
             double hitWindowGreat = (int)(beatmap.HitObjects.First().HitWindows.Great / 2) / clockRate;

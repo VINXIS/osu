@@ -60,10 +60,18 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                     flowBonus = ((osuCurrent.DistanceVector + osuPrevious.DistanceVector).Length / Math.Max(osuCurrent.JumpDistance, osuPrevious.JumpDistance)) / 2.0;
             }
 
-            if (currVel > 1.0)
-                return Math.Sqrt(currVel) * (Math.Max(angleAwk, jumpAwk) + angleBonus + flowBonus + sliderVel + angleAwk * jumpAwk) * jumpNorm;
-            else
-                return currVel * (Math.Max(angleAwk, jumpAwk) + angleBonus + flowBonus + sliderVel + angleAwk * jumpAwk) * jumpNorm;
+            jumpAwkVals.Add(Tuple.Create(osuCurrent.BaseObject.StartTime, jumpAwk));
+            angleAwkVals.Add(Tuple.Create(osuCurrent.BaseObject.StartTime, angleAwk));
+            angleBonusVals.Add(Tuple.Create(osuCurrent.BaseObject.StartTime, angleBonus));
+            sliderVelVals.Add(Tuple.Create(osuCurrent.BaseObject.StartTime, sliderVel));
+            flowBonusVals.Add(Tuple.Create(osuCurrent.BaseObject.StartTime, flowBonus));
+            jumpNormVals.Add(Tuple.Create(osuCurrent.BaseObject.StartTime, jumpNorm));
+            velocities.Add(Tuple.Create(osuCurrent.BaseObject.StartTime, currVel));
+
+            double normedVel = currVel > 1.0 ? Math.Sqrt(currVel) : currVel;
+            double normedSliderVel = sliderVel > 1.0 ? 1.0 : sliderVel;
+
+            return normedVel * (Math.Max(angleAwk, jumpAwk) + angleBonus + flowBonus + normedSliderVel + angleAwk * jumpAwk) * jumpNorm;
         }
     }
 }
