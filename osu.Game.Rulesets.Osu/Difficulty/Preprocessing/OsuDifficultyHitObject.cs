@@ -17,10 +17,10 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Preprocessing
         protected new OsuHitObject BaseObject => (OsuHitObject)base.BaseObject;
 
         /// <summary>
-        /// Distance from the end position of the previous <see cref="OsuDifficultyHitObject"/> to the start position of this <see cref="OsuDifficultyHitObject"/>.
+        ///  Distance from the end position of the previous <see cref="OsuDifficultyHitObject"/> to the start position of this <see cref="OsuDifficultyHitObject"/>.
         /// </summary>
         public Vector2 DistanceVector { get; private set; }
-
+        
         /// <summary>
         /// Normalized distance from the end position of the previous <see cref="OsuDifficultyHitObject"/> to the start position of this <see cref="OsuDifficultyHitObject"/>.
         /// </summary>
@@ -37,15 +37,16 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Preprocessing
         public double TravelTime { get; private set; }
 
         /// <summary>
-        /// The scaling based on how large or small the <see cref="OsuHitObject">'s radius is.
+        /// Angle the player has to take to hit this <see cref="OsuDifficultyHitObject"/>.
+        /// Calculated as the angle between the circles (current-2, current-1, current).
         /// </summary>
-        public float scalingFactor { get; private set; }
+        public double? Angle { get; private set; }
 
         /// <summary>
         /// Angle the player has to take to hit this <see cref="OsuDifficultyHitObject"/>.
         /// Calculated as the angle between the circles (current-2, current-1, current).
         /// </summary>
-        public double? Angle { get; private set; }
+        public double NormedDet { get; private set; }
 
         /// <summary>
         /// Milliseconds elapsed since the start time of the previous <see cref="OsuDifficultyHitObject"/>, with a minimum of 50ms.
@@ -61,16 +62,17 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Preprocessing
             this.lastLastObject = (OsuHitObject)lastLastObject;
             this.lastObject = (OsuHitObject)lastObject;
 
-            setDistances();
+            setDistances(clockRate);
 
             // Every strain interval is hard capped at the equivalent of 375 BPM streaming speed as a safety measure
             StrainTime = Math.Max(50, DeltaTime);
+            TravelTime = Math.Max(50, TravelTime);
         }
 
-        private void setDistances()
+        private void setDistances(double clockRate)
         {
             // We will scale distances by this factor, so we can assume a uniform CircleSize among beatmaps.
-            scalingFactor = normalized_radius / (float)BaseObject.Radius;
+            float scalingFactor = normalized_radius / (float)BaseObject.Radius;
             if (BaseObject.Radius < 30)
             {
                 float smallCircleBonus = Math.Min(30 - (float)BaseObject.Radius, 5) / 50;
@@ -81,7 +83,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Preprocessing
             {
                 computeSliderCursorPosition(lastSlider);
                 TravelDistance = lastSlider.LazyTravelDistance * scalingFactor;
-                TravelTime = lastSlider.LazyTravelTime;
+                TravelTime = lastSlider.LazyTravelTime / clockRate;
             }
 
             Vector2 lastCursorPosition = getEndCursorPosition(lastObject);
@@ -102,6 +104,8 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Preprocessing
 
                 float dot = Vector2.Dot(v1, v2);
                 float det = v1.X * v2.Y - v1.Y * v2.X;
+
+                if (Math.Max(v1.Length, v2.Length) != 0) NormedDet = det / Math.Pow(Math.Max(v1.Length, v2.Length), 2.0);
 
                 Angle = Math.Abs(Math.Atan2(det, dot));
             }

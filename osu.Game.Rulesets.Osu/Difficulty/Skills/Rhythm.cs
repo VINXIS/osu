@@ -56,7 +56,8 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                 {
                     switchVal = (switchCheck % 2) / Math.Abs(Math.Pow(switchCheck, 0.95) - 2.0);
                     if (osuCurrent.BaseObject is Slider || osuPrevious.BaseObject is Slider) switchVal /= 5.0;
-                    switchCheck = switchCheck % 2 == 1 ? 1 + switchCheck : 1; // To combat repetitive rhythms
+                    if (switchCheck == 1) switchCheck += 3;
+                    else switchCheck = switchCheck % 2 == 1 ? 1 + switchCheck : 1; // To combat repetitive rhythms
                     switchStrain = osuCurrent.StrainTime;
                 }
             }
