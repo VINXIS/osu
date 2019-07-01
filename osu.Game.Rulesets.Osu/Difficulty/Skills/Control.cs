@@ -26,11 +26,13 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
             var osuCurrent = (OsuDifficultyHitObject)current;
 
             double currVel = osuCurrent.JumpDistance / osuCurrent.StrainTime;
-            double sliderVel = osuCurrent.TravelDistance / osuCurrent.TravelTime;
+            double sliderVel = Math.Min(1.0, osuCurrent.TravelDistance / osuCurrent.TravelTime);
+            double normedVel = 0;
             double jumpAwk = 0;
             double angleAwk = 0;
             double jumpNorm = 0;
             double angleBonus = 0;
+            double flowBonus = 0;
             
             if (osuCurrent.JumpDistance > 125)
                 jumpNorm = 1.0;
@@ -50,16 +52,18 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                 if (osuCurrent.Angle != null && osuCurrent.Angle.Value > Math.PI / 4.0 && osuCurrent.Angle.Value < 3.0 * Math.PI / 4.0)
                     angleBonus = (Math.Min(prevVel, currVel) / Math.Max(geoVel, 0.75)) * Math.Pow(Math.Sin(osuCurrent.Angle.Value - (Math.PI / 4.0)), 2.0);
 
-                if (Math.Abs(currVel - prevVel) > Math.Max(geoVel, 0.75))
+                if (Math.Pow(Math.Abs(currVel - prevVel), 2.0) > Math.Max(1.0, Math.Min(currVel, prevVel)))
                     jumpAwk = 1.0;
                 else 
-                    jumpAwk = Math.Pow(Math.Sin((Math.PI / 2.0) * (Math.Abs(currVel - prevVel) / Math.Max(geoVel, 0.75))), 2.0);
+                    jumpAwk = Math.Pow(Math.Sin((Math.PI / 2.0) * (Math.Pow(Math.Abs(currVel - prevVel), 2.0) / Math.Max(1.0, Math.Min(currVel, prevVel)))), 2.0);
+
+                if (osuPrevious.NormedDet * osuCurrent.NormedDet < 0)
+                    flowBonus = ((osuCurrent.DistanceVector + osuPrevious.DistanceVector).Length / Math.Max(osuCurrent.JumpDistance, osuPrevious.JumpDistance)) / 2.0;
+
+                normedVel = Math.Min(currVel, prevVel) > 1.0 ? Math.Sqrt(Math.Min(currVel, prevVel)) : Math.Min(currVel, prevVel);
             }
 
-            if (currVel > 1.0)
-                return Math.Sqrt(currVel) * (Math.Max(angleAwk, jumpAwk) + angleBonus + sliderVel + angleAwk * jumpAwk) * jumpNorm;
-            else
-                return currVel * (Math.Max(angleAwk, jumpAwk) + angleBonus + sliderVel + angleAwk * jumpAwk) * jumpNorm;
+            return normedVel * (Math.Max(angleAwk, jumpAwk) + angleBonus + flowBonus + sliderVel + angleAwk * jumpAwk) * jumpNorm;
         }
     }
 }
