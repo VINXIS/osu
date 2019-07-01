@@ -30,6 +30,8 @@ namespace osu.Game.Rulesets.Osu.Difficulty
         private int countMeh;
         private int countMiss;
 
+        private const double pp_factor = 5.0f;
+
         public OsuPerformanceCalculator(Ruleset ruleset, WorkingBeatmap beatmap, ScoreInfo score)
             : base(ruleset, beatmap, score)
         {
@@ -55,7 +57,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
                 return 0;
 
             // Custom multipliers for NoFail and SpunOut.
-            double multiplier = 1.12f; // This is being adjusted to keep the final pp value scaled around what it used to be when changing things
+            double multiplier = 1.0f; // This is being adjusted to keep the final pp value scaled around what it used to be when changing things
 
             if (mods.Any(m => m is OsuModNoFail))
                 multiplier *= 0.90f;
@@ -68,15 +70,16 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             double staminaValue = computeStaminaValue();
             double speedValue = computeSpeedValue();
             double controlValue = computeControlValue();
-            double accuracyValue = computeAccuracyValue();
+            double rhythmValue = computeRhythmValue();
+
             double totalValue =
                 Math.Pow(
-                    Math.Pow(jumpAimValue, 1.1f) +
-                    Math.Pow(streamAimValue, 1.1f) +
-                    Math.Pow(staminaValue, 1.1f) +
-                    Math.Pow(speedValue, 1.1f) +
-                    Math.Pow(controlValue, 1.1f) +
-                    Math.Pow(accuracyValue, 1.1f), 1.0f / 1.1f
+                    Math.Pow(jumpAimValue, pp_factor) +
+                    Math.Pow(streamAimValue, pp_factor) +
+                    Math.Pow(staminaValue, pp_factor) +
+                    Math.Pow(speedValue, pp_factor) +
+                    Math.Pow(controlValue, pp_factor) +
+                    Math.Pow(rhythmValue, pp_factor), 1.0f / pp_factor
                 ) * multiplier;
 
             if (categoryRatings != null)
@@ -86,7 +89,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
                 categoryRatings.Add("Stamina", staminaValue);
                 categoryRatings.Add("Speed", speedValue);
                 categoryRatings.Add("Control", controlValue);
-                categoryRatings.Add("Accuracy", accuracyValue);
+                categoryRatings.Add("Rhythm", rhythmValue);
                 categoryRatings.Add("OD", Attributes.OverallDifficulty);
                 categoryRatings.Add("AR", Attributes.ApproachRate);
                 categoryRatings.Add("Max Combo", beatmapMaxCombo);
@@ -102,7 +105,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             if (mods.Any(m => m is OsuModTouchDevice))
                 rawAim = Math.Pow(rawAim, 0.75f);
 
-            double jumpAimValue = Math.Pow(5.0f * Math.Max(1.0f, rawAim / 0.0675f) - 4.0f, 3.0f) / 100000.0f;
+            double jumpAimValue = Math.Pow(5.0f * Math.Max(1.0f, rawAim / 0.0575f) - 4.0f, 3.0f) / 100000.0f;
 
             // Longer maps are worth more
             jumpAimValue *= 0.95f + 0.4f * Math.Min(1.0f, totalHits / 2000.0f) +
@@ -111,9 +114,9 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             // Penalize misses exponentially.
             jumpAimValue *= Math.Pow(0.95f, countMiss);
 
-            // Combo scaling
+            // HARSH Combo scaling
             if (beatmapMaxCombo > 0)
-                jumpAimValue *= Math.Min(Math.Pow(scoreMaxCombo, 0.8f) / Math.Pow(beatmapMaxCombo, 0.8f), 1.0f);
+                jumpAimValue *= Math.Min(Math.Pow(scoreMaxCombo, 1.1f) / Math.Pow(beatmapMaxCombo, 1.1f), 1.0f);
 
             double approachRateFactor = 1.0f;
             if (Attributes.ApproachRate > 10.33f)
@@ -152,7 +155,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             if (mods.Any(m => m is OsuModTouchDevice))
                 rawStreamAim = Math.Pow(rawStreamAim, 1.25f);
 
-            double streamAimValue = Math.Pow(5.0f * Math.Max(1.0f, rawStreamAim / 0.0675f) - 4.0f, 3.0f) / 100000.0f;
+            double streamAimValue = Math.Pow(5.0f * Math.Max(1.0f, rawStreamAim / 0.0575f) - 4.0f, 3.0f) / 100000.0f;
 
             // Longer maps are worth more
             streamAimValue *= 0.95f + 0.4f * Math.Min(1.0f, totalHits / 2000.0f) +
@@ -197,7 +200,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             if (mods.Any(m => m is OsuModTouchDevice))
                 rawControl = Math.Pow(rawControl, 0.75f);
     
-            double controlValue = Math.Pow(5.0f * Math.Max(1.0f, rawControl / 0.0675f) - 4.0f, 3.0f) / 100000.0f;
+            double controlValue = Math.Pow(5.0f * Math.Max(1.0f, rawControl / 0.0575f) - 4.0f, 3.0f) / 100000.0f;
 
             // Longer maps are worth more
             controlValue *= 0.95f + 0.4f * Math.Min(1.0f, totalHits / 2000.0f) +
@@ -206,9 +209,9 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             // Penalize misses exponentially.
             controlValue *= Math.Pow(0.95f, countMiss);
 
-            // Combo scaling
+            // HARSH Combo scaling
             if (beatmapMaxCombo > 0)
-                controlValue *= Math.Min(Math.Pow(scoreMaxCombo, 0.8f) / Math.Pow(beatmapMaxCombo, 0.8f), 1.0f);
+                controlValue *= Math.Min(Math.Pow(scoreMaxCombo, 1.1f) / Math.Pow(beatmapMaxCombo, 1.1f), 1.0f);
 
             double approachRateFactor = 1.0f;
             if (Attributes.ApproachRate > 10.33f)
@@ -237,14 +240,14 @@ namespace osu.Game.Rulesets.Osu.Difficulty
 
         private double computeStaminaValue()
         {
-            double staminaValue = Math.Pow(5.0f * Math.Max(1.0f, Attributes.StaminaStrain / 0.0675f) - 4.0f, 3.0f) / 100000.0f;
+            double staminaValue = Math.Pow(5.0f * Math.Max(1.0f, Attributes.StaminaStrain / 0.0575f) - 4.0f, 3.0f) / 100000.0f;
 
             // Penalize misses exponentially.
             staminaValue *= Math.Pow(0.99f, countMiss);
 
-            // Combo scaling
+            // SLIGHT Combo scaling
             if (beatmapMaxCombo > 0)
-                staminaValue *= Math.Min(Math.Pow(scoreMaxCombo, 0.8f) / Math.Pow(beatmapMaxCombo, 0.8f), 1.0f);
+                staminaValue *= Math.Min(Math.Pow(scoreMaxCombo, 0.6f) / Math.Pow(beatmapMaxCombo, 0.6f), 1.0f);
 
             // Scale the aim value with accuracy
             staminaValue *= accuracy + 0.02f / 0.98f;
@@ -261,14 +264,14 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             if (mods.Any(m => m is OsuModTouchDevice))
                 rawSpeed = Math.Pow(rawSpeed, 1.25f);
 
-            double speedValue = Math.Pow(5.0f * Math.Max(1.0f, rawSpeed / 0.0675f) - 4.0f, 3.0f) / 100000.0f;
+            double speedValue = Math.Pow(5.0f * Math.Max(1.0f, rawSpeed / 0.0575f) - 4.0f, 3.0f) / 100000.0f;
 
             // Penalize misses exponentially.
             speedValue *= Math.Pow(0.99f, countMiss);
 
-            // Combo scaling
+            // SLIGHT Combo scaling
             if (beatmapMaxCombo > 0)
-                speedValue *= Math.Min(Math.Pow(scoreMaxCombo, 0.8f) / Math.Pow(beatmapMaxCombo, 0.8f), 1.0f);
+                speedValue *= Math.Min(Math.Pow(scoreMaxCombo, 0.6f) / Math.Pow(beatmapMaxCombo, 0.6f), 1.0f);
 
             // Scale the aim value with accuracy
             speedValue *= accuracy + 0.02f / 0.98f;
@@ -278,9 +281,15 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             return speedValue;
         }
 
-        private double computeAccuracyValue()
+        private double computeRhythmValue()
         {
-            double rhythmValue = Math.Pow(5.0f * Math.Max(1.0f, Attributes.RhythmStrain / 0.0675f) - 4.0f, 2.0f) / 100000.0f;
+            double rhythmValue = Math.Pow(5.0f * Math.Max(1.0f, Attributes.RhythmStrain / 0.0575f) - 4.0f, 3.0f) / 1000000.0f;
+
+            double approachRateFactor = 1.0f;
+            if (Attributes.ApproachRate > 10.33f)
+                approachRateFactor *= 1.0f + 0.3f * (Attributes.ApproachRate - 10.33f);
+
+            rhythmValue *= approachRateFactor;
 
             // This percentage only considers HitCircles of any value - in this part of the calculation we focus on hitting the timing hit window
             double betterAccuracyPercentage;
@@ -297,23 +306,17 @@ namespace osu.Game.Rulesets.Osu.Difficulty
 
             // Lots of arbitrary values from testing.
             // Considering to use derivation from perfect accuracy in a probabilistic manner - assume normal distribution
-            double accuracyValue = rhythmValue * Math.Pow(1.52163f, Attributes.OverallDifficulty) * Math.Pow(betterAccuracyPercentage, 24) * 2.83f;
+            rhythmValue = rhythmValue * Math.Pow(1.52163f, Attributes.OverallDifficulty) * Math.Pow(betterAccuracyPercentage, 24);
 
             // Bonus for many hitcircles - it's harder to keep good accuracy up for longer
-            accuracyValue *= Math.Min(1.15f, Math.Pow(amountHitObjectsWithAccuracy / 1000.0f, 0.3f));
-
-            double approachRateFactor = 1.0f;
-            if (Attributes.ApproachRate > 10.33f)
-                approachRateFactor += 0.3f * (Attributes.ApproachRate - 10.33f);
-
-            accuracyValue *= approachRateFactor;
+            rhythmValue *= Math.Min(1.15f, Math.Pow(amountHitObjectsWithAccuracy / 1000.0f, 0.3f));
 
             if (mods.Any(m => m is OsuModHidden))
-                accuracyValue *= 1.08f;
+                rhythmValue *= 1.08f;
             if (mods.Any(m => m is OsuModFlashlight))
-                accuracyValue *= 1.02f;
+                rhythmValue *= 1.02f;
 
-            return accuracyValue;
+            return rhythmValue;
         }
 
         private double totalHits => countGreat + countGood + countMeh + countMiss;

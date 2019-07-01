@@ -19,10 +19,9 @@ namespace osu.Game.Rulesets.Osu.Difficulty
 {
     public class OsuDifficultyCalculator : DifficultyCalculator
     {
-        private const double difficulty_multiplier = 0.06;
-
-        private const double aim_increase_percentage = 0.15;
-        private const double speed_increase_percentage = 0.05;
+        private const double difficulty_multiplier = 0.0575;
+        private const double star_factor = 1.1;
+        private const double star_multiplier = 0.56;
 
         public OsuDifficultyCalculator(Ruleset ruleset, WorkingBeatmap beatmap)
             : base(ruleset, beatmap)
@@ -41,12 +40,13 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             double controlRating = Math.Sqrt(skills[4].DifficultyValue()) * difficulty_multiplier;
             double rhythmRating = Math.Sqrt(skills[5].DifficultyValue()) * difficulty_multiplier;
 
-            double skill_factor_aim = Math.Log(2.0) / (aim_increase_percentage * (jumpAimRating + controlRating) / 2.0);
-            double skill_factor_speed = Math.Log(2.0) / (speed_increase_percentage * (speedRating + streamAimRating + staminaRating) / 3.0);
-
-            double totalAim = Math.Log(Math.Pow(Math.E, skill_factor_aim * jumpAimRating) + Math.Pow(Math.E, skill_factor_aim * controlRating)) / skill_factor_aim;
-            double totalSpeed = Math.Log(Math.Pow(Math.E, skill_factor_speed * staminaRating) + Math.Pow(Math.E, skill_factor_speed * streamAimRating) + Math.Pow(Math.E, skill_factor_speed * speedRating)) / skill_factor_speed;
-            double starRating = totalAim + totalSpeed;
+            double starRating = star_multiplier * Math.Pow(
+                Math.Pow(jumpAimRating, star_factor) + 
+                Math.Pow(streamAimRating, star_factor) +
+                Math.Pow(staminaRating, star_factor) +
+                Math.Pow(speedRating, star_factor) +
+                Math.Pow(controlRating, star_factor) +
+                Math.Pow(rhythmRating, star_factor), 1.0 / star_factor);
 
             string values = "Jump Aim: " + Math.Round(jumpAimRating, 2) +
             "\nStream Aim: " + Math.Round(streamAimRating, 2) + 
@@ -54,8 +54,6 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             "\nSpeed: " + Math.Round(speedRating, 2) + 
             "\nControl: " + Math.Round(controlRating, 2) + 
             "\nRhythm: " + Math.Round(rhythmRating, 2) +
-            "\nAim SR: " + Math.Round(totalAim, 2) +
-            "\nSpeed SR: " + Math.Round(totalSpeed, 2) +
             "\nSR: " + Math.Round(starRating, 2);
 
             using (StreamWriter outputFile = new StreamWriter("values.txt"))

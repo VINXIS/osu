@@ -14,8 +14,9 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
     /// </summary>
     public class Speed : Skill
     {
-        protected override double SkillMultiplier => 3500;
-        protected override double StrainDecayBase => 0.225;
+        public double StrainDecay = 1.0;
+        protected override double SkillMultiplier => 35.0;
+        protected override double StrainDecayBase => StrainDecay;
 
         protected override double StrainValueOf(DifficultyHitObject current)
         {
@@ -23,8 +24,12 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                 return 0;
 
             var osuCurrent = (OsuDifficultyHitObject)current;
-            double strainTime = Math.Max(osuCurrent.DeltaTime, 35.0);
-            return Math.Pow(1.0 / strainTime, 1.1);
+            double strainTime = Math.Max(osuCurrent.DeltaTime, 37.5);
+            StrainDecay = Math.Pow(7.0 / 8.0, 1000.0 / Math.Min(strainTime, 200.0));
+            if (strainTime < 75.0)
+                return Math.Pow(75.0 / strainTime, 1.75);
+            else 
+                return 75.0 / strainTime;
         }
     }
 }

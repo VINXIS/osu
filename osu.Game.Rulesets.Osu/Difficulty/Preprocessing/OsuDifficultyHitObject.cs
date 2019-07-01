@@ -27,6 +27,11 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Preprocessing
         public double JumpDistance { get; private set; }
 
         /// <summary>
+        /// Normalized distance from the end position of the previous <see cref="OsuDifficultyHitObject"/> to the start position of this <see cref="OsuDifficultyHitObject"/> Ignoring lazy distance.
+        /// </summary>
+        public double EndJumpDistance { get; private set; }
+
+        /// <summary>
         /// Normalized distance between the start and end position of the previous <see cref="OsuDifficultyHitObject"/>.
         /// </summary>
         public double TravelDistance { get; private set; }
@@ -35,6 +40,11 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Preprocessing
         /// The time given to go through the normalized distance between the start and end position of the previous <see cref="OsuDifficultyHitObject"/>.
         /// </summary>
         public double TravelTime { get; private set; }
+
+        /// <summary>
+        /// The full time given to go through the start and end position of the previous <see cref="OsuDifficultyHitObject"/>.
+        /// </summary>
+        public double TravelDuration { get; private set; }
 
         /// <summary>
         /// Angle the player has to take to hit this <see cref="OsuDifficultyHitObject"/>.
@@ -66,7 +76,6 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Preprocessing
 
             // Every strain interval is hard capped at the equivalent of 375 BPM streaming speed as a safety measure
             StrainTime = Math.Max(50, DeltaTime);
-            TravelTime = Math.Max(50, TravelTime);
         }
 
         private void setDistances(double clockRate)
@@ -84,6 +93,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Preprocessing
                 computeSliderCursorPosition(lastSlider);
                 TravelDistance = lastSlider.LazyTravelDistance * scalingFactor;
                 TravelTime = lastSlider.LazyTravelTime / clockRate;
+                TravelDuration = lastSlider.Duration / clockRate;
             }
 
             Vector2 lastCursorPosition = getEndCursorPosition(lastObject);
@@ -93,6 +103,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Preprocessing
             {
                 DistanceVector = (BaseObject.StackedPosition * scalingFactor - lastCursorPosition * scalingFactor);
                 JumpDistance = DistanceVector.Length;
+                EndJumpDistance = (BaseObject.StackedPosition * scalingFactor - lastObject.EndPosition * scalingFactor).Length;
             }
 
             if (lastLastObject != null)

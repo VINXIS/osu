@@ -18,7 +18,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
         private const double angle_bonus_end = Math.PI / 3.0;
         private const double pi_over_2 = Math.PI / 2.0;
 
-        protected override double SkillMultiplier => 3500;
+        protected override double SkillMultiplier => 3000;
         protected override double StrainDecayBase => 0.3;
 
         protected override double StrainValueOf(DifficultyHitObject current)

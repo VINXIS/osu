@@ -16,7 +16,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
     /// </summary>
     public class Rhythm : Skill
     {
-        protected override double SkillMultiplier => 500.0;
+        protected override double SkillMultiplier => 175.0;
         protected override double StrainDecayBase => 0.1;
 
         private int switchCheck = 1;

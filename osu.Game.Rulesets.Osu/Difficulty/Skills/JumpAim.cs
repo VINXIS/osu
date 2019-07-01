@@ -16,9 +16,8 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
     {
         private const double angle_bonus_begin = Math.PI / 3.0;
         private const double angle_bonus_end = 5.0 * Math.PI / 6.0;
-        private const double square_bonus_begin = Math.PI / 3.0;
-        private const double square_bonus_end = 2.0 * Math.PI / 3.0;
-        private const double almostRadius = 90;
+
+        private const double pi_over_2 = Math.PI / 2.0;
 
         protected override double SkillMultiplier => 30;
         protected override double StrainDecayBase => 0.15;
@@ -30,39 +29,39 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
 
             var osuCurrent = (OsuDifficultyHitObject)current;
             double angleBonus = 0;
-            double squareBonus = 0;
-            double decelBonus = 1;
 
             double currDistance = applyDiminishingExp(osuCurrent.JumpDistance);
-            double currTravelStrain = osuCurrent.TravelDistance / osuCurrent.TravelTime;
+            double currDistanceStrain = currDistance / osuCurrent.StrainTime;
+            double currTravelStrain = osuCurrent.TravelTime != 0 ? osuCurrent.TravelDistance / osuCurrent.TravelTime : 0;
 
             if (Previous.Count > 0)
             {
                 var osuPrevious = (OsuDifficultyHitObject)Previous[0];
                 double prevDistance = applyDiminishingExp(osuPrevious.JumpDistance);
+                double prevDistanceStrain = prevDistance / osuPrevious.StrainTime;
+                double geoStrain = Math.Sqrt(prevDistanceStrain * currDistanceStrain);
+                double minDist = Math.Min(currDistance, prevDistance);
+                double jumpNorm = 0;
 
-                double geoStrain = Math.Sqrt((prevDistance / osuPrevious.StrainTime) *
-                            (currDistance / osuCurrent.StrainTime));
+                if (minDist > 175)
+                    jumpNorm = 1.0;
+                else if (minDist > 125)
+                    jumpNorm = Math.Pow(Math.Sin(Math.PI * minDist / 100 - 9.0 * Math.PI / 4.0), 2.0);
 
-                if (osuPrevious.Angle != null)
+                if (osuCurrent.Angle != null)
                 {
-                    
-                    if (osuPrevious.Angle.Value > angle_bonus_end)
+                    if (osuCurrent.Angle.Value > angle_bonus_end)
                         angleBonus = geoStrain;
-                    else if (osuPrevious.Angle.Value > angle_bonus_begin)
-                        angleBonus = geoStrain * Math.Pow(Math.Sin(osuPrevious.Angle.Value - angle_bonus_begin), 2.0);
-                    if (osuCurrent.Angle != null && osuCurrent.Angle.Value < square_bonus_begin && osuCurrent.Angle.Value > square_bonus_end && osuPrevious.Angle.Value < square_bonus_begin && osuPrevious.Angle.Value > square_bonus_end)
-                        squareBonus = geoStrain * Math.Pow(Math.Sin(angle_bonus_begin - osuCurrent.Angle.Value), 2.0) * Math.Pow(Math.Sin(angle_bonus_begin - osuPrevious.Angle.Value), 2.0);
+                    else if (osuCurrent.Angle.Value > angle_bonus_begin)
+                        angleBonus = geoStrain * Math.Pow(Math.Sin(osuCurrent.Angle.Value - angle_bonus_begin), 2.0);
                 }
-                if (osuCurrent.JumpDistance / osuCurrent.StrainTime < osuPrevious.JumpDistance / osuPrevious.StrainTime)
-                    decelBonus = Math.Min((osuPrevious.JumpDistance / osuPrevious.StrainTime) / (osuCurrent.JumpDistance / osuCurrent.StrainTime), 4);
+
+                angleBonus *= jumpNorm;
             }
 
-            double currDistanceStrain = decelBonus * (currDistance / osuCurrent.StrainTime);
-
-            return currDistanceStrain + currTravelStrain + Math.Sqrt(currTravelStrain * currDistanceStrain) + angleBonus + squareBonus;
+            return currDistanceStrain + currTravelStrain + Math.Sqrt(currTravelStrain * currDistanceStrain) + angleBonus;
         }
 
-        private double applyDiminishingExp(double val) => Math.Max(val - almostRadius / 2.0, 0.0);
+        private double applyDiminishingExp(double val) => Math.Max(val - 45.0, 0.0);
     }
 }
