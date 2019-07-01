@@ -47,7 +47,14 @@ namespace osu.Game.Rulesets.Difficulty.Skills
         private readonly List<double> strainPeaks = new List<double>();
 
         private List<Tuple<double, double>> grapher = new List<Tuple<double, double>>();
-        public List<Tuple<double, double>> checkStuffOut = new List<Tuple<double, double>>();
+
+        public List<Tuple<double, double>> jumpAwkVals = new List<Tuple<double, double>>();
+        public List<Tuple<double, double>> angleAwkVals = new List<Tuple<double, double>>();
+        public List<Tuple<double, double>> angleBonusVals = new List<Tuple<double, double>>();
+        public List<Tuple<double, double>> sliderVelVals = new List<Tuple<double, double>>();
+        public List<Tuple<double, double>> flowBonusVals = new List<Tuple<double, double>>();
+        public List<Tuple<double, double>> jumpNormVals = new List<Tuple<double, double>>();
+        public List<Tuple<double, double>> velocities = new List<Tuple<double, double>>();
 
         /// <summary>
         /// Process a <see cref="DifficultyHitObject"/> and update current strain values accordingly.
@@ -58,8 +65,6 @@ namespace osu.Game.Rulesets.Difficulty.Skills
             grapher.Add(Tuple.Create(current.BaseObject.StartTime, currentStrain));
             currentStrain += StrainValueOf(current) * SkillMultiplier;
             grapher.Add(Tuple.Create(current.BaseObject.StartTime, currentStrain));
-
-            if (this.GetType().Name == "JumpAim" && current.BaseObject.StartTime == 22593) Console.WriteLine(StrainValueOf(current));
 
             currentSectionPeak = Math.Max(currentStrain, currentSectionPeak);
 
@@ -97,11 +102,42 @@ namespace osu.Game.Rulesets.Difficulty.Skills
                 foreach (Tuple<double, double> point in grapher)
                     outputFile.WriteLine(point);
             }
+
             if (this.GetType().Name == "Control")
             {
+                using (StreamWriter outputFile = new StreamWriter("jumpAwkVals.txt"))
+                {
+                    foreach (Tuple<double, double> point in jumpAwkVals)
+                        outputFile.WriteLine(point);
+                }
+                using (StreamWriter outputFile = new StreamWriter("angleAwkVals.txt"))
+                {
+                    foreach (Tuple<double, double> point in angleAwkVals)
+                        outputFile.WriteLine(point);
+                }
+                using (StreamWriter outputFile = new StreamWriter("angleBonusVals.txt"))
+                {
+                    foreach (Tuple<double, double> point in angleBonusVals)
+                        outputFile.WriteLine(point);
+                }
+                using (StreamWriter outputFile = new StreamWriter("sliderVelVals.txt"))
+                {
+                    foreach (Tuple<double, double> point in sliderVelVals)
+                        outputFile.WriteLine(point);
+                }
+                using (StreamWriter outputFile = new StreamWriter("flowBonusVals.txt"))
+                {
+                    foreach (Tuple<double, double> point in flowBonusVals)
+                        outputFile.WriteLine(point);
+                }
+                using (StreamWriter outputFile = new StreamWriter("jumpNormVals.txt"))
+                {
+                    foreach (Tuple<double, double> point in jumpNormVals)
+                        outputFile.WriteLine(point);
+                }
                 using (StreamWriter outputFile = new StreamWriter("velocities.txt"))
                 {
-                    foreach (Tuple<double, double> point in checkStuffOut)
+                    foreach (Tuple<double, double> point in velocities)
                         outputFile.WriteLine(point);
                 }
             }
