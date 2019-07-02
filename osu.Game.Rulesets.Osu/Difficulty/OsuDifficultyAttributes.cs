@@ -10,6 +10,9 @@ namespace osu.Game.Rulesets.Osu.Difficulty
     {
         public double MissStarRatingIncrement;
 
+        public double AimRating;
+        public double SpeedRating;
+
         public double JumpAimStrain;
         public IList<double> JumpAimComboStarRatings;
         public IList<double> JumpAimMissCounts;
@@ -26,21 +29,13 @@ namespace osu.Game.Rulesets.Osu.Difficulty
         public IList<double> SpeedComboStarRatings;
         public IList<double> SpeedMissCounts;
 
-        public double ControlStrain;
-        public IList<double> ControlComboStarRatings;
-        public IList<double> ControlMissCounts;
+        public double AimControlStrain;
+        public IList<double> AimControlComboStarRatings;
+        public IList<double> AimControlMissCounts;
 
-        public double RhythmStrain;
-        public IList<double> RhythmComboStarRatings;
-        public IList<double> RhythmMissCounts;
-        
-        public double OldAimStrain;
-        public IList<double> OldAimComboStarRatings;
-        public IList<double> OldAimMissCounts;
-
-        public double OldSpeedStrain;
-        public IList<double> OldSpeedComboStarRatings;
-        public IList<double> OldSpeedMissCounts;
+        public double FingerControlStrain;
+        public IList<double> FingerControlComboStarRatings;
+        public IList<double> FingerControlMissCounts;
 
         public double ApproachRate;
         public double OverallDifficulty;

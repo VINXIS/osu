@@ -29,9 +29,9 @@ namespace osu.Game.Rulesets.Osu.Difficulty
         private int countGood;
         private int countMeh;
         private int countMiss;
-
-        private const double miss_decay = 0.985;
         private const double combo_weight = 0.5;
+        private const double pp_factor = 4.0f;
+        private const double total_factor = 1.5f;
 
         public OsuPerformanceCalculator(Ruleset ruleset, WorkingBeatmap beatmap, ScoreInfo score)
             : base(ruleset, beatmap, score)
@@ -58,7 +58,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
                 return 0;
 
             // Custom multipliers for NoFail and SpunOut.
-            double multiplier = 1.12f; // This is being adjusted to keep the final pp value scaled around what it used to be when changing things
+            double multiplier = 1.2f; // This is being adjusted to keep the final pp value scaled around what it used to be when changing things
 
             if (mods.Any(m => m is OsuModNoFail))
                 multiplier *= 0.90f;
@@ -66,18 +66,35 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             if (mods.Any(m => m is OsuModSpunOut))
                 multiplier *= 0.95f;
 
-            double aimValue = computeAimValue(categoryRatings);
+            double jumpAimValue = computeJumpAimValue(categoryRatings);
+            double streamAimValue = computeStreamAimValue(categoryRatings);
+            double staminaValue = computeStaminaValue(categoryRatings);
             double speedValue = computeSpeedValue(categoryRatings);
-            double accuracyValue = computeAccuracyValue(categoryRatings);
-            double totalValue =
-                Math.Pow(
-                    Math.Pow(aimValue, 1.1f) +
-                    Math.Pow(speedValue, 1.1f) +
-                    Math.Pow(accuracyValue, 1.1f), 1.0f / 1.1f
-                ) * multiplier;
+            double aimControlValue = computeAimControlValue(categoryRatings);
+            double fingerControlValue = computeFingerControlValue(categoryRatings);
+
+            double totalAimValue = Math.Pow(
+                Math.Pow(jumpAimValue, pp_factor) + 
+                Math.Pow(streamAimValue, pp_factor) + 
+                Math.Pow(aimControlValue, pp_factor), 1.0 / pp_factor);
+            double totalSpeedValue = Math.Pow(
+                Math.Pow(staminaValue, pp_factor) + 
+                Math.Pow(speedValue, pp_factor) + 
+                Math.Pow(fingerControlValue, pp_factor), 1.0 / pp_factor);
+            double totalValue = Math.Pow(
+                Math.Pow(totalAimValue, total_factor) + 
+                Math.Pow(totalSpeedValue, total_factor), 1.0 / total_factor) * multiplier;
 
             if (categoryRatings != null)
             {
+                categoryRatings.Add("Jump Aim", jumpAimValue);
+                categoryRatings.Add("Stream Aim", streamAimValue);
+                categoryRatings.Add("Stamina", staminaValue);
+                categoryRatings.Add("Speed", speedValue);
+                categoryRatings.Add("Aim Control", aimControlValue);
+                categoryRatings.Add("Finger Control", fingerControlValue);
+                categoryRatings.Add("Total Aim", totalAimValue);
+                categoryRatings.Add("Total Speed", totalSpeedValue);
                 categoryRatings.Add("OD", Attributes.OverallDifficulty);
                 categoryRatings.Add("AR", Attributes.ApproachRate);
                 categoryRatings.Add("Max Combo", beatmapMaxCombo);
@@ -158,84 +175,185 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             return (sr - values.Count * increment) * (1 - t);
         }
 
-        private double computeAimValue(Dictionary<string, double> categoryRatings = null)
+        private double computeJumpAimValue(Dictionary<string, double> categoryRatings = null)
         {
-            double aimComboStarRating = interpComboStarRating(Attributes.OldAimComboStarRatings, scoreMaxCombo, beatmapMaxCombo);
-            double aimMissCountStarRating = interpMissCountStarRating(Attributes.OldAimComboStarRatings.Last(), Attributes.OldAimMissCounts, countMiss);
-            double rawAim = Math.Pow(aimComboStarRating, combo_weight) * Math.Pow(aimMissCountStarRating, 1 - combo_weight);
+            double jumpAimComboStarRating = interpComboStarRating(Attributes.JumpAimComboStarRatings, scoreMaxCombo, beatmapMaxCombo);
+            double jumpAimMissCountStarRating = interpMissCountStarRating(Attributes.JumpAimComboStarRatings.Last(), Attributes.JumpAimMissCounts, countMiss);
+            double rawJumpAim = Math.Pow(jumpAimComboStarRating, combo_weight) * Math.Pow(jumpAimMissCountStarRating, 1 - combo_weight);
 
             if (mods.Any(m => m is OsuModTouchDevice))
-                rawAim = Math.Pow(rawAim, 0.8);
+                rawJumpAim = Math.Pow(rawJumpAim, 0.8);
 
-            double aimValue = Math.Pow(5.0f * Math.Max(1.0f, rawAim / 0.0675f) - 4.0f, 3.0f) / 100000.0f;
+            double jumpAimValue = Math.Pow(5.0f * Math.Max(1.0f, rawJumpAim / 0.0675f) - 4.0f, 3.0f) / 100000.0f;
 
             // discourage misses
-            aimValue *= Math.Pow(miss_decay, countMiss);
+            jumpAimValue *= Math.Pow(0.95, countMiss);
 
             double approachRateFactor = 1.0f;
 
             if (Attributes.ApproachRate > 10.33f)
                 approachRateFactor += 0.3f * (Attributes.ApproachRate - 10.33f);
             else if (Attributes.ApproachRate < 8.0f)
-            {
                 approachRateFactor += 0.01f * (8.0f - Attributes.ApproachRate);
-            }
 
-            aimValue *= approachRateFactor;
+            jumpAimValue *= approachRateFactor;
 
             // We want to give more reward for lower AR when it comes to aim and HD. This nerfs high AR and buffs lower AR.
             if (mods.Any(h => h is OsuModHidden))
-                aimValue *= 1.0f + 0.04f * (12.0f - Attributes.ApproachRate);
+                jumpAimValue *= Math.Max(1.0f, 1.0f + 0.04f * (9.0f - Attributes.ApproachRate));
 
             if (mods.Any(h => h is OsuModFlashlight))
             {
                 // Apply object-based bonus for flashlight.
-                aimValue *= 1.0f + 0.35f * Math.Min(1.0f, totalHits / 200.0f) +
-                            (totalHits > 200
-                                ? 0.3f * Math.Min(1.0f, (totalHits - 200) / 300.0f) +
-                                  (totalHits > 500 ? (totalHits - 500) / 1200.0f : 0.0f)
-                                : 0.0f);
+                jumpAimValue *= 1.0f + 0.35f * Math.Min(1.0f, totalHits / 200.0f) +
+                        (totalHits > 200 ? 0.3f * Math.Min(1.0f, (totalHits - 200) / 300.0f) +
+                        (totalHits > 500 ? (totalHits - 500) / 1200.0f : 0.0f) : 0.0f);
             }
 
-            // Scale the aim value with accuracy _slightly_
-            aimValue *= 0.5f + accuracy / 2.0f;
+            // Scale the jumpaim value with accuracy
+            jumpAimValue *= 0.75f + accuracy / 4.0f;
             // It is important to also consider accuracy difficulty when doing that
-            aimValue *= 0.98f + Math.Pow(Attributes.OverallDifficulty, 2) / 2500;
+            jumpAimValue *= 0.98f + Math.Pow(Attributes.OverallDifficulty, 2) / 2500;
 
             if (categoryRatings != null)
             {
-                categoryRatings.Add("Aim", aimValue);
-                categoryRatings.Add("Aim Combo Stars", aimComboStarRating);
-                categoryRatings.Add("Aim Miss Count Stars", aimMissCountStarRating);
+                categoryRatings.Add("Jump Aim", jumpAimValue);
+                categoryRatings.Add("Jump Aim Combo Stars", jumpAimComboStarRating);
+                categoryRatings.Add("Jump Aim Miss Count Stars", jumpAimMissCountStarRating);
             }
 
-            return aimValue;
+            return jumpAimValue;
         }
 
-        private double computeSpeedValue(Dictionary<string, double> categoryRatings = null)
+        private double computeStreamAimValue(Dictionary<string, double> categoryRatings = null)
         {
-            double speedComboStarRating = interpComboStarRating(Attributes.OldSpeedComboStarRatings, scoreMaxCombo, beatmapMaxCombo);
-            double speedMissCountStarRating = interpMissCountStarRating(Attributes.OldSpeedComboStarRatings.Last(), Attributes.OldSpeedMissCounts, countMiss);
-            double rawSpeed = Math.Pow(speedComboStarRating, combo_weight) * Math.Pow(speedMissCountStarRating, 1 - combo_weight);
+            double streamAimComboStarRating = interpComboStarRating(Attributes.StreamAimComboStarRatings, scoreMaxCombo, beatmapMaxCombo);
+            double streamAimMissCountStarRating = interpMissCountStarRating(Attributes.StreamAimComboStarRatings.Last(), Attributes.StreamAimMissCounts, countMiss);
+            double rawStreamAim = Math.Pow(streamAimComboStarRating, combo_weight) * Math.Pow(streamAimMissCountStarRating, 1 - combo_weight);
 
-            double speedValue = Math.Pow(5.0f * Math.Max(1.0f, rawSpeed / 0.0675f) - 4.0f, 3.0f) / 100000.0f;
+            if (mods.Any(m => m is OsuModTouchDevice))
+                rawStreamAim = Math.Pow(rawStreamAim, 1.25f);
 
-            // discourage misses
-            speedValue *= Math.Pow(miss_decay, countMiss);
+            double streamAimValue = Math.Pow(5.0f * Math.Max(1.0f, rawStreamAim / 0.0675f) - 4.0f, 3.0f) / 100000.0f;
+            
+            // Penalize misses exponentially.
+            streamAimValue *= Math.Pow(0.95f, countMiss);
 
             double approachRateFactor = 1.0f;
             if (Attributes.ApproachRate > 10.33f)
                 approachRateFactor += 0.3f * (Attributes.ApproachRate - 10.33f);
 
-            speedValue *= approachRateFactor;
+            streamAimValue *= approachRateFactor;
 
             if (mods.Any(m => m is OsuModHidden))
-                speedValue *= 1.0f + 0.04f * (12.0f - Attributes.ApproachRate);
+                streamAimValue *= 1.0f + 0.08f * (12.0f - Attributes.ApproachRate);
+            
+            if (mods.Any(h => h is OsuModFlashlight))
+            {
+                // Apply object-based bonus for flashlight.
+                streamAimValue *= 1.0f + (0.35f * Math.Min(1.0f, totalHits / 200.0f) +
+                        (totalHits > 200 ? 0.3f * Math.Min(1.0f, (totalHits - 200) / 300.0f) +
+                        (totalHits > 500 ? (totalHits - 500) / 1200.0f : 0.0f) : 0.0f)) / 2.0f;
+            }
 
-            // Scale the speed value with accuracy _slightly_
-            speedValue *= 0.02f + accuracy;
+            // Scale the streamaim value with accuracy
+            streamAimValue *= 0.75f + accuracy / 4.0f;
             // It is important to also consider accuracy difficulty when doing that
-            speedValue *= 0.96f + Math.Pow(Attributes.OverallDifficulty, 2) / 1600;
+            streamAimValue *= 0.98f + Math.Pow(Attributes.OverallDifficulty, 2) / 2500;
+
+            if (categoryRatings != null)
+            {
+                categoryRatings.Add("Stream Aim", streamAimValue);
+                categoryRatings.Add("Stream Aim Combo Stars", streamAimComboStarRating);
+                categoryRatings.Add("Stream Aim Miss Count Stars", streamAimMissCountStarRating);
+            }
+
+            return streamAimValue;
+        }
+
+        private double computeAimControlValue(Dictionary<string, double> categoryRatings = null)
+        {
+            double aimControlComboStarRating = interpComboStarRating(Attributes.AimControlComboStarRatings, scoreMaxCombo, beatmapMaxCombo);
+            double aimControlMissCountStarRating = interpMissCountStarRating(Attributes.AimControlComboStarRatings.Last(), Attributes.AimControlMissCounts, countMiss);
+            double rawAimControl = Math.Pow(aimControlComboStarRating, combo_weight) * Math.Pow(aimControlMissCountStarRating, 1 - combo_weight);
+
+            if (mods.Any(m => m is OsuModTouchDevice))
+                rawAimControl = Math.Pow(rawAimControl, 0.75f);
+    
+            double aimControlValue = Math.Pow(5.0f * Math.Max(1.0f, rawAimControl / 0.0675f) - 4.0f, 3.0f) / 100000.0f;
+
+            // Penalize misses exponentially.
+            aimControlValue *= Math.Pow(0.95f, countMiss);
+
+            double approachRateFactor = 1.0f;
+            if (Attributes.ApproachRate > 10.33f)
+                approachRateFactor += 0.3f * (Attributes.ApproachRate - 10.33f);
+
+            aimControlValue *= approachRateFactor;
+
+            if (mods.Any(m => m is OsuModHidden))
+                aimControlValue *= 1.0f + 0.08f * (12.0f - Attributes.ApproachRate);
+
+            if (mods.Any(h => h is OsuModFlashlight))
+            {
+                // Apply object-based bonus for flashlight.
+                aimControlValue *= 1.0f + 0.35f * Math.Min(1.0f, totalHits / 200.0f) +
+                        (totalHits > 200 ? 0.3f * Math.Min(1.0f, (totalHits - 200) / 300.0f) +
+                        (totalHits > 500 ? (totalHits - 500) / 1200.0f : 0.0f) : 0.0f);
+            }
+
+            // Scale the sim control value with accuracy
+            aimControlValue *= 0.75f + accuracy / 4.0f;
+            // It is important to also consider accuracy difficulty when doing that
+            aimControlValue *= 0.98f + Math.Pow(Attributes.OverallDifficulty, 2) / 2500;
+
+            if (categoryRatings != null)
+            {
+                categoryRatings.Add("Aim Control", aimControlValue);
+                categoryRatings.Add("Aim Control Combo Stars", aimControlComboStarRating);
+                categoryRatings.Add("Aim Control Miss Count Stars", aimControlMissCountStarRating);
+            }
+
+            return aimControlValue;
+        }
+
+        private double computeStaminaValue(Dictionary<string, double> categoryRatings = null)
+        {
+            double staminaComboStarRating = interpComboStarRating(Attributes.StaminaComboStarRatings, scoreMaxCombo, beatmapMaxCombo);
+            double staminaMissCountStarRating = interpMissCountStarRating(Attributes.StaminaComboStarRatings.Last(), Attributes.StaminaMissCounts, countMiss);
+            double rawStamina = Math.Pow(staminaComboStarRating, combo_weight) * Math.Pow(staminaMissCountStarRating, 1 - combo_weight);
+            double staminaValue = Math.Pow(5.0f * Math.Max(1.0f, rawStamina / 0.0675f) - 4.0f, 3.0f) / 100000.0f;
+
+            // Penalize misses exponentially.
+            staminaValue *= Math.Pow(0.99f, countMiss);
+
+            staminaValue *= 0.5f + Math.Pow(1.5f * accuracy - 0.5f, 10.0f) / 2.0f;
+
+            if (categoryRatings != null)
+            {
+                categoryRatings.Add("Stamina", staminaValue);
+                categoryRatings.Add("Stamina Combo Stars", staminaComboStarRating);
+                categoryRatings.Add("Stamina Miss Count Stars", staminaMissCountStarRating);
+            }
+
+            return staminaValue;
+        }
+
+        private double computeSpeedValue(Dictionary<string, double> categoryRatings = null)
+        {
+            double speedComboStarRating = interpComboStarRating(Attributes.SpeedComboStarRatings, scoreMaxCombo, beatmapMaxCombo);
+            double speedMissCountStarRating = interpMissCountStarRating(Attributes.SpeedComboStarRatings.Last(), Attributes.SpeedMissCounts, countMiss);
+            double rawSpeed = Math.Pow(speedComboStarRating, combo_weight) * Math.Pow(speedMissCountStarRating, 1 - combo_weight);
+
+            if (mods.Any(m => m is OsuModTouchDevice))
+                rawSpeed = Math.Pow(rawSpeed, 1.25f);
+
+            double speedValue = Math.Pow(5.0f * Math.Max(1.0f, rawSpeed / 0.0675f) - 4.0f, 3.0f) / 100000.0f;
+
+            // Penalize misses exponentially.
+            speedValue *= Math.Pow(0.99f, countMiss);
+
+            speedValue *= 0.5f + Math.Pow(1.5f * accuracy - 0.5f, 10.0f) / 2.0f;
 
             if (categoryRatings != null)
             {
@@ -247,36 +365,37 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             return speedValue;
         }
 
-        private double computeAccuracyValue(Dictionary<string, double> categoryRatings = null)
+        private double computeFingerControlValue(Dictionary<string, double> categoryRatings = null)
         {
-            // This percentage only considers HitCircles of any value - in this part of the calculation we focus on hitting the timing hit window
-            double betterAccuracyPercentage;
-            int amountHitObjectsWithAccuracy = countHitCircles;
+            double fingerControlComboStarRating = interpComboStarRating(Attributes.FingerControlComboStarRatings, scoreMaxCombo, beatmapMaxCombo);
+            double fingerControlMissCountStarRating = interpMissCountStarRating(Attributes.FingerControlComboStarRatings.Last(), Attributes.FingerControlMissCounts, countMiss);
+            double rawFingerControl = Math.Pow(fingerControlComboStarRating, combo_weight) * Math.Pow(fingerControlMissCountStarRating, 1 - combo_weight);
 
-            if (amountHitObjectsWithAccuracy > 0)
-                betterAccuracyPercentage = ((countGreat - (totalHits - amountHitObjectsWithAccuracy)) * 6 + countGood * 2 + countMeh) / (amountHitObjectsWithAccuracy * 6);
-            else
-                betterAccuracyPercentage = 0;
+            if (mods.Any(m => m is OsuModTouchDevice))
+                rawFingerControl = Math.Pow(rawFingerControl, 1.25f);
 
-            // It is possible to reach a negative accuracy with this formula. Cap it at zero - zero points
-            if (betterAccuracyPercentage < 0)
-                betterAccuracyPercentage = 0;
+            double fingerControlValue = Math.Pow(5.0f * Math.Max(1.0f, rawFingerControl / 0.0675f) - 4.0f, 3.0f) / 100000.0f;
 
-            // Lots of arbitrary values from testing.
-            // Considering to use derivation from perfect accuracy in a probabilistic manner - assume normal distribution
-            double accuracyValue = Math.Pow(1.52163f, Attributes.OverallDifficulty) * Math.Pow(betterAccuracyPercentage, 24) * 2.83f;
+            double approachRateFactor = 1.0f;
+            if (Attributes.ApproachRate > 10.33f)
+                approachRateFactor += 0.3f * (Attributes.ApproachRate - 10.33f);
 
-            // Bonus for many hitcircles - it's harder to keep good accuracy up for longer
-            accuracyValue *= Math.Min(1.15f, Math.Pow(amountHitObjectsWithAccuracy / 1000.0f, 0.3f));
+            fingerControlValue *= approachRateFactor;
 
-            if (mods.Any(m => m is OsuModHidden))
-                accuracyValue *= 1.08f;
-            if (mods.Any(m => m is OsuModFlashlight))
-                accuracyValue *= 1.02f;
+            // Penalize misses exponentially.
+            fingerControlValue *= Math.Pow(0.99f, countMiss);
 
-            categoryRatings?.Add("Accuracy", accuracyValue);
+            // Scale with acc
+            fingerControlValue *= 0.5f + Math.Pow(1.5f * accuracy - 0.5f, 10.0f) / 2.0f;
 
-            return accuracyValue;
+            if (categoryRatings != null)
+            {
+                categoryRatings.Add("Finger Control", fingerControlValue);
+                categoryRatings.Add("Finger Control Combo Stars", fingerControlComboStarRating);
+                categoryRatings.Add("Finger Control Miss Count Stars", fingerControlMissCountStarRating);
+            }
+
+            return fingerControlValue;
         }
 
         private double totalHits => countGreat + countGood + countMeh + countMiss;

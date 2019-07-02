@@ -14,9 +14,9 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
     /// </summary>
     public class Stamina : OsuSkill
     {
-
-        protected override double SkillMultiplier => 5;
-        protected override double StrainDecayBase => Math.Pow(0.99, 20.0);
+        private double StrainDecay = 1.0;
+        protected override double SkillMultiplier => 3;
+        protected override double StrainDecayBase => StrainDecay;
 
         protected override double StrainValueOf(DifficultyHitObject current)
         {
@@ -25,13 +25,10 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
 
             var osuCurrent = (OsuDifficultyHitObject)current;
 
-            double changeBonus = 1.0;
-            if (Previous.Count > 0)
-            {
-                var osuPrevious = (OsuDifficultyHitObject)Previous[0];
-                changeBonus = Math.Min(Math.Min(osuPrevious.StrainTime / osuCurrent.StrainTime, osuCurrent.StrainTime / osuPrevious.StrainTime), 2.0);
-            }
-            return changeBonus * Math.Pow(75.0 / osuCurrent.StrainTime, 1.75);
+            StrainDecay = Math.Pow(63.0 / 64.0, 1000.0 / Math.Min(osuCurrent.StrainTime, 200.0));
+
+            if (osuCurrent.StrainTime < 75) return Math.Pow(75.0 / osuCurrent.StrainTime, 1.5);
+            else return 75.0 / osuCurrent.StrainTime;
         }
     }
 }

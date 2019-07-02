@@ -2,6 +2,7 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using osu.Game.Beatmaps;
@@ -18,44 +19,83 @@ namespace osu.Game.Rulesets.Osu.Difficulty
 {
     public class OsuDifficultyCalculator : DifficultyCalculator
     {
-        private const double star_rating_scale_factor = 0.975;
+        private const double difficulty_multiplier = 0.0675;
+        private const double star_rating_scale_factor = 1.3;
+        private const double star_factor = 4;
+        private const double total_star_factor = 1.5;
 
         public OsuDifficultyCalculator(Ruleset ruleset, WorkingBeatmap beatmap)
             : base(ruleset, beatmap)
         {
         }
 
+        public double PointsTransformation(double skillRating) => Math.Pow(5.0f * Math.Max(1.0f, skillRating / difficulty_multiplier) - 4.0f, 3.0f) / 100000.0f;
+        public double StarTransformation(double pointsRating) => difficulty_multiplier * (Math.Pow(100000.0f * pointsRating, 1.0f / 3.0f) + 4.0f) / 5.0f;
+
         protected override DifficultyAttributes CreateDifficultyAttributes(IBeatmap beatmap, Mod[] mods, Skill[] skills, double clockRate)
         {
-            var oldaim = (OsuSkill)skills[0];
-            var oldspeed = (OsuSkill)skills[1];
-            var jumpaim = (OsuSkill)skills[2];
-            var streamaim = (OsuSkill)skills[3];
-            var stamina = (OsuSkill)skills[4];
-            var speed = (OsuSkill)skills[5];
-            var control = (OsuSkill)skills[6];
-            var rhythm = (OsuSkill)skills[7];
+            var jumpAim = (OsuSkill)skills[0];
+            var streamAim = (OsuSkill)skills[1];
+            var stamina = (OsuSkill)skills[2];
+            var speed = (OsuSkill)skills[3];
+            var aimControl = (OsuSkill)skills[4];
+            var fingerControl = (OsuSkill)skills[5];
 
             if (beatmap.HitObjects.Count == 0)
                 return new OsuDifficultyAttributes { Mods = mods };
 
-            IList<double> aimComboSr = oldaim.ComboStarRatings;
-            IList<double> aimMissCounts = oldaim.MissCounts;
+            IList<double> jumpAimComboSr = jumpAim.ComboStarRatings;
+            IList<double> jumpAimMissCounts = jumpAim.MissCounts;
 
-            IList<double> speedComboSr = oldspeed.ComboStarRatings;
-            IList<double> speedMissCounts = oldspeed.MissCounts;
+            IList<double> streamAimComboSr = streamAim.ComboStarRatings;
+            IList<double> streamAimMissCounts = streamAim.MissCounts;
+
+            IList<double> staminaComboSr = stamina.ComboStarRatings;
+            IList<double> staminaMissCounts = stamina.MissCounts;
+
+            IList<double> speedComboSr = speed.ComboStarRatings;
+            IList<double> speedMissCounts = speed.MissCounts;
+            
+            IList<double> aimControlComboSr = aimControl.ComboStarRatings;
+            IList<double> aimControlMissCounts = aimControl.MissCounts;
+
+            IList<double> fingerControlComboSr = fingerControl.ComboStarRatings;
+            IList<double> fingerControlMissCounts = fingerControl.MissCounts;
 
             const double miss_sr_increment = OsuSkill.MISS_STAR_RATING_INCREMENT;
 
-            double oldaimRating = oldaim.Difficulty;
-            double oldspeedRating = oldspeed.Difficulty;
-            double jumpaimRating = jumpaim.Difficulty;
-            double streamaimRating = streamaim.Difficulty;
+            double jumpAimRating = jumpAim.Difficulty;
+            double streamAimRating = streamAim.Difficulty;
             double staminaRating = stamina.Difficulty;
             double speedRating = speed.Difficulty;
-            double controlRating = control.Difficulty;
-            double rhythmRating = rhythm.Difficulty;
-            double starRating = star_rating_scale_factor * (oldaimRating + oldspeedRating + Math.Abs(oldaimRating - oldspeedRating) / 2);
+            double aimControlRating = aimControl.Difficulty;
+            double fingerControlRating = fingerControl.Difficulty;
+            
+            double totalAimRating = StarTransformation(Math.Pow(
+                Math.Pow(PointsTransformation(jumpAimRating), star_factor) + 
+                Math.Pow(PointsTransformation(streamAimRating), star_factor) +
+                Math.Pow(PointsTransformation(aimControlRating), star_factor), 1.0 / star_factor));
+            double totalSpeedRating = StarTransformation(Math.Pow(
+                Math.Pow(PointsTransformation(staminaRating), star_factor) +
+                Math.Pow(PointsTransformation(speedRating), star_factor) +
+                Math.Pow(PointsTransformation(fingerControlRating), star_factor), 1.0 / star_factor));
+            double starRating = star_rating_scale_factor * Math.Pow(
+                Math.Pow(totalAimRating, total_star_factor) + 
+                Math.Pow(totalSpeedRating, total_star_factor), 1.0 / total_star_factor);
+
+            string values = "Jump Aim: " + Math.Round(jumpAimRating, 2) +
+            "\nStream Aim: " + Math.Round(streamAimRating, 2) + 
+            "\nStamina: " + Math.Round(staminaRating, 2) + 
+            "\nSpeed: " + Math.Round(speedRating, 2) + 
+            "\nAim Control: " + Math.Round(aimControlRating, 2) + 
+            "\nFinger Control: " + Math.Round(fingerControlRating, 2) +
+            "\n---" +
+            "\nAim SR: " + Math.Round(totalAimRating, 2) +
+            "\nSpeed SR: " + Math.Round(totalSpeedRating, 2) +
+            "\nSR: " + Math.Round(starRating, 2);
+
+            using (StreamWriter outputFile = new StreamWriter("values.txt"))
+                outputFile.WriteLine(values);
 
             // Todo: These int casts are temporary to achieve 1:1 results with osu!stable, and should be removed in the future
             double hitWindowGreat = (int)(beatmap.HitObjects.First().HitWindows.Great / 2) / clockRate;
@@ -68,23 +108,37 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             return new OsuDifficultyAttributes
             {
                 StarRating = starRating,
+                AimRating = totalAimRating,
+                SpeedRating = totalSpeedRating,
                 Mods = mods,
                 MissStarRatingIncrement = miss_sr_increment,
-                OldAimStrain = oldaimRating,
-                OldAimComboStarRatings = aimComboSr,
-                OldAimMissCounts = aimMissCounts,
-                OldSpeedStrain = oldspeedRating,
-                OldSpeedComboStarRatings = speedComboSr,
-                OldSpeedMissCounts = speedMissCounts,
                 ApproachRate = preempt > 1200 ? (1800 - preempt) / 120 : (1200 - preempt) / 150 + 5,
                 OverallDifficulty = (80 - hitWindowGreat) / 6,
                 MaxCombo = maxCombo,
-                JumpAimStrain = jumpaimRating,
-                StreamAimStrain = streamaimRating,
+
+                JumpAimStrain = jumpAimRating,
+                JumpAimComboStarRatings = jumpAimComboSr,
+                JumpAimMissCounts = jumpAimMissCounts,
+
+                StreamAimStrain = streamAimRating,
+                StreamAimComboStarRatings = streamAimComboSr,
+                StreamAimMissCounts = streamAimMissCounts,
+
                 StaminaStrain = staminaRating,
+                StaminaComboStarRatings = staminaComboSr,
+                StaminaMissCounts = staminaMissCounts,
+
                 SpeedStrain = speedRating,
-                ControlStrain = controlRating,
-                RhythmStrain = rhythmRating,
+                SpeedComboStarRatings = speedComboSr,
+                SpeedMissCounts = speedMissCounts,
+
+                AimControlStrain = aimControlRating,
+                AimControlComboStarRatings = aimControlComboSr,
+                AimControlMissCounts = aimControlMissCounts,
+
+                FingerControlStrain = fingerControlRating,
+                FingerControlComboStarRatings = fingerControlComboSr,
+                FingerControlMissCounts = fingerControlMissCounts
             };
         }
 
@@ -104,14 +158,12 @@ namespace osu.Game.Rulesets.Osu.Difficulty
 
         protected override Skill[] CreateSkills(IBeatmap beatmap) => new Skill[]
         {
-            new OldAim(),
-            new OldSpeed(),
             new JumpAim(),
             new StreamAim(),
             new Stamina(),
             new Speed(),
-            new Control(),
-            new Rhythm()
+            new AimControl(),
+            new FingerControl()
         };
 
         protected override Mod[] DifficultyAdjustmentMods => new Mod[]

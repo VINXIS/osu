@@ -7,6 +7,7 @@
 #define OSU_SKILL_STRAIN_AFTER_NOTE
 
 using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using osu.Game.Rulesets.Difficulty.Preprocessing;
@@ -82,6 +83,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
 
         private readonly List<double> powDifficulties = new List<double>(); // list of difficulty^k for each note
         private readonly List<double> timestamps = new List<double>(); // list of timestamps for each note
+        private List<Tuple<double, double>> grapher = new List<Tuple<double, double>>();
         private double fcProb;
         private bool lastScaled;
 
@@ -100,7 +102,9 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
         public override void Process(DifficultyHitObject current)
         {
             currentStrain *= strainDecay(current.DeltaTime);
+            grapher.Add(Tuple.Create(current.BaseObject.StartTime, currentStrain));
             currentStrain += StrainValueOf(current) * SkillMultiplier;
+            grapher.Add(Tuple.Create(current.BaseObject.StartTime, currentStrain));
 
             const double legacy_scaling_factor = 10;
             double stars = Math.Sqrt(currentStrain * legacy_scaling_factor) * difficulty_multiplier;
@@ -167,6 +171,12 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
             }
 
             Difficulty = Math.Pow(total, 1 / starBonusK);
+
+            using (StreamWriter outputFile = new StreamWriter(this.GetType().Name.ToLower() + ".txt"))
+            {
+                foreach (Tuple<double, double> point in grapher)
+                    outputFile.WriteLine(point);
+            }
 
             calculateSkillToFcSubsets(difficultyPartialSums);
 

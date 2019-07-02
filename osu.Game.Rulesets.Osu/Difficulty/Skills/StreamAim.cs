@@ -14,15 +14,17 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
     /// </summary>
     public class StreamAim : OsuSkill
     {
+        private double StrainDecay = 0.3;
         private const double angle_bonus_begin = 5.0 * Math.PI / 6.0;
         private const double angle_bonus_end = Math.PI / 3.0;
         private const double pi_over_2 = Math.PI / 2.0;
 
-        protected override double SkillMultiplier => 3500;
-        protected override double StrainDecayBase => 0.3;
+        protected override double SkillMultiplier => 2500;
+        protected override double StrainDecayBase => StrainDecay;
 
         protected override double StrainValueOf(DifficultyHitObject current)
         {
+            StrainDecay = 0.3;
             if (current.BaseObject is Spinner)
                 return 0;
 
@@ -44,6 +46,27 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                 else if (osuCurrent.Angle.Value < angle_bonus_begin)
                     angleBonus = 1.0 + (Math.Pow(Math.Sin(angle_bonus_begin - osuCurrent.Angle.Value), 2.0) / 4.0);
             }
+
+            if (Previous.Count > 0)
+            {
+                var osuPrevious = (OsuDifficultyHitObject)Previous[0];
+                double prevDistance = osuPrevious.TravelDistance + osuPrevious.JumpDistance + Math.Sqrt(osuPrevious.TravelDistance * osuPrevious.JumpDistance);
+                double prevStrain = 0;
+
+                if (prevDistance > 150)
+                    prevStrain = 1.0;
+                else
+                    prevStrain = Math.Pow(Math.Sin(pi_over_2 * (prevDistance / 150)), 2.0);
+
+                prevStrain = Math.Abs(strain - prevStrain);
+
+                if ((prevStrain * strain) / Math.Sqrt(osuCurrent.StrainTime * osuPrevious.StrainTime) > strain * angleBonus / osuCurrent.StrainTime)
+                    return (prevStrain + strain) / Math.Sqrt(osuCurrent.StrainTime * osuPrevious.StrainTime);
+            }
+
+            if (osuCurrent.BaseObject is Slider) StrainDecay = Math.Min(osuCurrent.TravelTime, osuCurrent.StrainTime - 30.0) / osuCurrent.StrainTime * 
+                (1.0 - Math.Pow(1.0 - StrainDecay, Math.Pow(2.0 + osuCurrent.TravelDistance / Math.Max(osuCurrent.TravelTime, 30.0), 3.0))) + 
+                Math.Max(30.0, osuCurrent.StrainTime - osuCurrent.TravelTime) / osuCurrent.StrainTime * StrainDecay;
 
             return strain * angleBonus / osuCurrent.StrainTime;
         }
