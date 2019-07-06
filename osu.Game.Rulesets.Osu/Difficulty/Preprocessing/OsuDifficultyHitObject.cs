@@ -94,6 +94,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Preprocessing
                 TravelDistance = lastSlider.LazyTravelDistance * scalingFactor;
                 TravelTime = lastSlider.LazyTravelTime / clockRate;
                 TravelDuration = lastSlider.Duration / clockRate;
+                EndJumpDistance = (BaseObject.StackedPosition * scalingFactor - lastSlider.TailCircle.Position * scalingFactor).Length;
             }
 
             Vector2 lastCursorPosition = getEndCursorPosition(lastObject);
@@ -103,7 +104,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Preprocessing
             {
                 DistanceVector = (BaseObject.StackedPosition * scalingFactor - lastCursorPosition * scalingFactor);
                 JumpDistance = DistanceVector.Length;
-                EndJumpDistance = (BaseObject.StackedPosition * scalingFactor - lastObject.EndPosition * scalingFactor).Length;
+                if (EndJumpDistance == 0) EndJumpDistance = JumpDistance;
             }
 
             if (lastLastObject != null)
@@ -141,13 +142,13 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Preprocessing
                 var diff = slider.StackedPosition + slider.Path.PositionAt(progress) - slider.LazyEndPosition.Value;
                 float dist = diff.Length;
 
-                if (dist > approxFollowCircleRadius)
+                if (dist > approxFollowCircleRadius || t != slider.TailCircle.StartTime)
                 {
                     // The cursor would be outside the follow circle, we need to move it
                     diff.Normalize(); // Obtain direction of diff
                     dist -= approxFollowCircleRadius;
                     slider.LazyEndPosition += diff * dist;
-                    slider.LazyTravelDistance += dist;
+                    slider.LazyTravelDistance += Math.Max(0, dist);
                     slider.LazyTravelTime = t - slider.StartTime;
                 }
             });

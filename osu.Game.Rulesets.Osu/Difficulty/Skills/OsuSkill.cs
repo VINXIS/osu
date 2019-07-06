@@ -147,7 +147,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
         /// <summary>
         /// Perform difficulty calculations
         /// </summary>
-        public override void Calculate()
+        public override void Calculate(int? beatmapid)
         {
 #if OSU_SKILL_STRAIN_AFTER_NOTE
             if (!lastScaled)
@@ -172,7 +172,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
 
             Difficulty = Math.Pow(total, 1 / starBonusK);
 
-            using (StreamWriter outputFile = new StreamWriter(this.GetType().Name.ToLower() + ".txt"))
+            using (StreamWriter outputFile = new StreamWriter(beatmapid + this.GetType().Name.ToLower() + ".txt"))
             {
                 foreach (Tuple<double, double> point in grapher)
                     outputFile.WriteLine(point);

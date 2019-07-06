@@ -74,7 +74,7 @@ namespace osu.Game.Rulesets.Difficulty
 
             foreach (Skill s in skills)
             {
-                s.Calculate();
+                s.Calculate(beatmap.BeatmapInfo.OnlineBeatmapID);
             }
 
             return CreateDifficultyAttributes(beatmap, mods, skills, clockRate);

@@ -21,8 +21,8 @@ namespace osu.Game.Rulesets.Osu.Difficulty
     {
         private const double difficulty_multiplier = 0.0675;
         private const double star_rating_scale_factor = 1.3;
-        private const double star_factor = 4;
-        private const double total_star_factor = 1.5;
+        private const double star_factor = 0.5;
+        private const double total_star_factor = 4.0;
 
         public OsuDifficultyCalculator(Ruleset ruleset, WorkingBeatmap beatmap)
             : base(ruleset, beatmap)
@@ -64,24 +64,24 @@ namespace osu.Game.Rulesets.Osu.Difficulty
 
             const double miss_sr_increment = OsuSkill.MISS_STAR_RATING_INCREMENT;
 
-            double jumpAimRating = jumpAim.Difficulty;
-            double streamAimRating = streamAim.Difficulty;
-            double staminaRating = stamina.Difficulty;
-            double speedRating = speed.Difficulty;
-            double aimControlRating = aimControl.Difficulty;
-            double fingerControlRating = fingerControl.Difficulty;
+            double jumpAimRating = jumpAimComboSr.Last();
+            double streamAimRating = streamAimComboSr.Last();
+            double staminaRating = staminaComboSr.Last();
+            double speedRating = speedComboSr.Last();
+            double aimControlRating = aimControlComboSr.Last();
+            double fingerControlRating = fingerControlComboSr.Last();
             
-            double totalAimRating = StarTransformation(Math.Pow(
+            double totalAimRating = Math.Pow(
                 Math.Pow(PointsTransformation(jumpAimRating), star_factor) + 
                 Math.Pow(PointsTransformation(streamAimRating), star_factor) +
-                Math.Pow(PointsTransformation(aimControlRating), star_factor), 1.0 / star_factor));
-            double totalSpeedRating = StarTransformation(Math.Pow(
+                Math.Pow(PointsTransformation(aimControlRating), star_factor), 1.0 / star_factor);
+            double totalSpeedRating = Math.Pow(
                 Math.Pow(PointsTransformation(staminaRating), star_factor) +
                 Math.Pow(PointsTransformation(speedRating), star_factor) +
-                Math.Pow(PointsTransformation(fingerControlRating), star_factor), 1.0 / star_factor));
-            double starRating = star_rating_scale_factor * Math.Pow(
+                Math.Pow(PointsTransformation(fingerControlRating), star_factor), 1.0 / star_factor);
+            double starRating = StarTransformation(star_rating_scale_factor * Math.Pow(
                 Math.Pow(totalAimRating, total_star_factor) + 
-                Math.Pow(totalSpeedRating, total_star_factor), 1.0 / total_star_factor);
+                Math.Pow(totalSpeedRating, total_star_factor), 1.0 / total_star_factor));
 
             string values = "Jump Aim: " + Math.Round(jumpAimRating, 2) +
             "\nStream Aim: " + Math.Round(streamAimRating, 2) + 
@@ -94,7 +94,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             "\nSpeed SR: " + Math.Round(totalSpeedRating, 2) +
             "\nSR: " + Math.Round(starRating, 2);
 
-            using (StreamWriter outputFile = new StreamWriter("values.txt"))
+            using (StreamWriter outputFile = new StreamWriter(beatmap.BeatmapInfo.OnlineBeatmapID + "values.txt"))
                 outputFile.WriteLine(values);
 
             // Todo: These int casts are temporary to achieve 1:1 results with osu!stable, and should be removed in the future
@@ -108,8 +108,8 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             return new OsuDifficultyAttributes
             {
                 StarRating = starRating,
-                AimRating = totalAimRating,
-                SpeedRating = totalSpeedRating,
+                AimRating = StarTransformation(totalAimRating),
+                SpeedRating = StarTransformation(totalSpeedRating),
                 Mods = mods,
                 MissStarRatingIncrement = miss_sr_increment,
                 ApproachRate = preempt > 1200 ? (1800 - preempt) / 120 : (1200 - preempt) / 150 + 5,

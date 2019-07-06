@@ -75,7 +75,7 @@ namespace osu.Game.Rulesets.Difficulty.Skills
             Previous.Push(current);
         }
 
-        public virtual void Calculate()
+        public virtual void Calculate(int? beatmapid)
         {
             SaveCurrentPeak();
         }

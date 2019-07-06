@@ -22,24 +22,31 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
 
         protected override double SkillMultiplier => 25;
         protected override double StrainDecayBase => StrainDecay;
+        protected override double StarMultiplierPerRepeat => 1.02;
 
         protected override double StrainValueOf(DifficultyHitObject current)
         {
             StrainDecay = 0.15;
+
             if (current.BaseObject is Spinner)
                 return 0;
 
             var osuCurrent = (OsuDifficultyHitObject)current;
+            if (osuCurrent.BaseObject is Slider && osuCurrent.TravelTime < osuCurrent.StrainTime) StrainDecay = Math.Min(osuCurrent.TravelTime, osuCurrent.StrainTime - 30.0) / osuCurrent.StrainTime * 
+                (1.0 - Math.Pow(1.0 - StrainDecay, Math.Pow(2.0 + osuCurrent.TravelDistance / Math.Max(osuCurrent.TravelTime, 30.0), 3.0))) + 
+                Math.Max(30.0, osuCurrent.StrainTime - osuCurrent.TravelTime) / osuCurrent.StrainTime * StrainDecay;
+
+
             double angleBonus = 0;
 
-            double currDistance = applyDiminishingExp(osuCurrent.JumpDistance);
+            double currDistance = applyDiminishingExp(osuCurrent.JumpDistance + osuCurrent.TravelDistance);
             double currDistanceStrain = currDistance / osuCurrent.StrainTime;
-            double currTravelStrain = osuCurrent.TravelTime != 0 ? osuCurrent.TravelDistance / osuCurrent.TravelTime : 0;
+            double currTravelStrain = osuCurrent.TravelTime != 0 ? applyDiminishingExp(osuCurrent.TravelDistance) / osuCurrent.TravelTime : 0;
 
             if (Previous.Count > 0)
             {
                 var osuPrevious = (OsuDifficultyHitObject)Previous[0];
-                double prevDistance = applyDiminishingExp(osuPrevious.JumpDistance);
+                double prevDistance = applyDiminishingExp(osuPrevious.JumpDistance + osuPrevious.TravelDistance);
                 double prevDistanceStrain = prevDistance / osuPrevious.StrainTime;
                 double geoStrain = Math.Sqrt(prevDistanceStrain * currDistanceStrain);
                 double minDist = Math.Min(currDistance, prevDistance);
@@ -61,11 +68,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                 angleBonus *= jumpNorm;
             }
 
-            if (osuCurrent.BaseObject is Slider) StrainDecay = Math.Min(osuCurrent.TravelTime, osuCurrent.StrainTime - 30.0) / osuCurrent.StrainTime * 
-                (1.0 - Math.Pow(1.0 - StrainDecay, Math.Pow(2.0 + osuCurrent.TravelDistance / Math.Max(osuCurrent.TravelTime, 30.0), 3.0))) + 
-                Math.Max(30.0, osuCurrent.StrainTime - osuCurrent.TravelTime) / osuCurrent.StrainTime * StrainDecay;
-
-            return currDistanceStrain + currTravelStrain + Math.Sqrt(currTravelStrain * currDistanceStrain) + angleBonus;
+            return currDistanceStrain + currTravelStrain + angleBonus;
         }
 
         private double applyDiminishingExp(double val) => Math.Max(val - 45.0, 0.0);
