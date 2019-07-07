@@ -5,6 +5,7 @@ using System;
 using osu.Game.Rulesets.Difficulty.Preprocessing;
 using osu.Game.Rulesets.Osu.Difficulty.Preprocessing;
 using osu.Game.Rulesets.Osu.Objects;
+using osuTK;
 
 namespace osu.Game.Rulesets.Osu.Difficulty.Skills
 {
@@ -13,17 +14,19 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
     /// </summary>
     public class AimControl : OsuSkill
     {
-        private double StrainDecay = 0.9;
-        protected override double SkillMultiplier => 3;
+        private double StrainDecay = 0.225;
+        protected override double SkillMultiplier => 80;
         protected override double StrainDecayBase => StrainDecay;
-        protected override double StarMultiplierPerRepeat => 1.03;
+        protected override double StarMultiplierPerRepeat => 1.07;
 
+        private double pi_over_root_2 = Math.PI / Math.Sqrt(2.0);
         private const double pi_over_2 = Math.PI / 2.0;
         private const double pi_over_4 = Math.PI / 4.0;
+        private double radius;
 
         protected override double StrainValueOf(DifficultyHitObject current)
         {
-            StrainDecay = 0.9;
+            StrainDecay = 0.225;
 
             if (current.BaseObject is Spinner)
                 return 0;
@@ -32,81 +35,80 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
             if (osuCurrent.BaseObject is Slider && osuCurrent.TravelTime < osuCurrent.StrainTime) StrainDecay = Math.Min(osuCurrent.TravelTime, osuCurrent.StrainTime - 30.0) / osuCurrent.StrainTime * 
                 (1.0 - Math.Pow(1.0 - StrainDecay, Math.Pow(2.0 + osuCurrent.TravelDistance / Math.Max(osuCurrent.TravelTime, 30.0), 3.0))) + 
                 Math.Max(30.0, osuCurrent.StrainTime - osuCurrent.TravelTime) / osuCurrent.StrainTime * StrainDecay;
+            if (radius == 0) radius = ((OsuHitObject)osuCurrent.BaseObject).Radius;
 
-            double currVel = osuCurrent.JumpDistance / osuCurrent.StrainTime;
-            double currLazyVel = osuCurrent.JumpDistance / Math.Max(50, osuCurrent.StrainTime - osuCurrent.TravelTime);
-            double currEndVel = osuCurrent.EndJumpDistance / Math.Max(50, osuCurrent.StrainTime - osuCurrent.TravelDuration);
-            double sliderVel = osuCurrent.TravelTime != 0 ? Math.Min(1.0, osuCurrent.TravelDistance / osuCurrent.TravelTime) : 0;
+            double currDistance = applyDiminishingExp(osuCurrent.JumpDistance + osuCurrent.TravelDistance);
 
-            double minVel = currLazyVel != 0 ? Math.Min(currVel, Math.Min(currLazyVel, currEndVel)) : Math.Min(currVel, currEndVel);
-
-            double jumpAwk = 0;
+            double strain = 0;
             double jumpNorm = 0;
-            double angleBonus = 0;
+            double jumpAwk = 0;
             double angleAwk = 0;
-            double flowBonus = 0;
+            double angleBonus = 0;
+            double flowBonus = 1.0;
+            double sliderVel = 1.0 + Math.Min(1.0, osuCurrent.TravelDistance / osuCurrent.TravelTime);
 
-            if (Previous.Count > 0)
+            if (Previous.Count > 1)
             {
+                area.Add(Tuple.Create(current.BaseObject.StartTime, 0.0));
                 var osuPrevious = (OsuDifficultyHitObject)Previous[0];
-                
-                double prevVel = osuPrevious.JumpDistance / osuPrevious.StrainTime;
-                double prevLazyVel = osuPrevious.JumpDistance / Math.Max(50, osuPrevious.StrainTime - osuPrevious.TravelTime);
-                double prevEndVel = osuPrevious.EndJumpDistance / Math.Max(50, osuPrevious.StrainTime - osuPrevious.TravelDuration);
+                var osuPrevPrevious = (OsuDifficultyHitObject)Previous[1];
 
-                double minDist = Math.Min(osuCurrent.TravelDistance + osuCurrent.JumpDistance, osuPrevious.TravelDistance + osuPrevious.JumpDistance);
+                double prevDistance = applyDiminishingExp(osuPrevious.JumpDistance + osuPrevious.TravelDistance);
+                double diffDist = Math.Pow(currDistance - prevDistance, 2.0);
+                double minDist = Math.Min(currDistance, prevDistance);
+                double geoDist = Math.Sqrt(currDistance * prevDistance);
 
-                double geoVel = Math.Sqrt(currVel * prevVel);
-                double geoLazyVel = Math.Sqrt(currLazyVel * prevLazyVel);
-                double geoEndVel = Math.Sqrt(currEndVel * prevEndVel);
+                double currArea = Det(osuCurrent, osuPrevious) / 2.0;
+                double prevArea = Det(osuPrevious, osuPrevPrevious) / 2.0;
+                double diffArea = Math.Pow(Math.Abs(currArea) - Math.Abs(prevArea), 2.0);
+                double geoArea = Math.Sqrt(Math.Abs(currArea) * Math.Abs(prevArea));
 
-                double jumpAwk1 = 0;
-                double jumpAwk2 = 0;
-                double jumpAwk3 = 0;
+                double areaChange = 0;
+                double distChange = 0;
 
                 if (minDist > 150)
                     jumpNorm = 1.0;
                 else 
-                    jumpNorm = Math.Pow(Math.Sin(pi_over_2 * minDist / 150), 2.0);
-
-                if (Math.Pow(currVel - prevVel, 2.0) >= Math.Max(geoVel, 0.75))
-                    jumpAwk1 = 1.0;
+                    jumpNorm = applySinTransformation(minDist / 150); // Less value for stacked objects
+                
+                if (diffArea >= Math.Max(geoArea, 0.75))
+                    areaChange = 1.0;
                 else 
-                    jumpAwk1 = Math.Pow(Math.Sin(pi_over_2 * (Math.Pow(currVel - prevVel, 2.0) / Math.Max(geoVel, 0.75))), 2.0);
+                    areaChange = applySinTransformation(diffArea / Math.Max(geoArea, 0.75)); // Check for area size change created by 2 distance vectors
 
-                if (Math.Pow(currEndVel - prevEndVel, 2.0) >= Math.Max(geoEndVel, 0.75))
-                    jumpAwk2 = 1.0;
+                if (diffDist >= Math.Max(geoDist, 0.75))
+                    distChange = 1.0;
                 else 
-                    jumpAwk2 = Math.Pow(Math.Sin(pi_over_2 * (Math.Pow(currEndVel - prevEndVel, 2.0) / Math.Max(geoEndVel, 0.75))), 2.0);
+                    distChange = applySinTransformation(diffDist / Math.Max(geoDist, 0.75)); // Check for distance change
 
-                if (currLazyVel > 0 || prevLazyVel > 0)
-                {
-                    if (Math.Pow(currLazyVel - prevLazyVel, 2.0) >= Math.Max(geoLazyVel, 0.75))
-                        jumpAwk3 = 1.0;
-                    else 
-                        jumpAwk3 = Math.Pow(Math.Sin(pi_over_2 * (Math.Pow(currLazyVel - prevLazyVel, 2.0) / Math.Max(geoLazyVel, 0.75))), 2.0);
-                } else
-                    jumpAwk3 = jumpAwk2;
-
-                jumpAwk = Math.Min(jumpAwk1, Math.Min(jumpAwk2, jumpAwk3));
+                jumpAwk = Math.Sqrt(areaChange * distChange);
 
                 if (osuCurrent.Angle != null && osuPrevious.Angle != null)
                 {
-                    angleAwk = Math.Pow(Math.Sin((osuCurrent.Angle.Value - osuPrevious.Angle.Value) / 1.5), 2.0);
+                    angleAwk = Math.Pow(Math.Sin((osuCurrent.Angle.Value - osuPrevious.Angle.Value) / 1.5), 2.0); // Higher value for changing angles
 
                     double averageAngle = (osuCurrent.Angle.Value + osuPrevious.Angle.Value) / 2.0;
-
                     if (averageAngle > pi_over_4 && averageAngle < 3.0 * pi_over_4)
-                        angleBonus = Math.Pow(Math.Sin(averageAngle - pi_over_4), 2.0);
+                        angleBonus = Math.Pow(Math.Sin(averageAngle - pi_over_4), 2.0); // Bonus if both angles are wide
                     else if (averageAngle >= 3.0 * pi_over_4)
                         angleBonus = 1.0;
                 }
 
-                if (osuPrevious.NormedDet * osuCurrent.NormedDet < 0)
-                    flowBonus = ((osuCurrent.DistanceVector + osuPrevious.DistanceVector).Length / Math.Max(osuCurrent.JumpDistance, osuPrevious.JumpDistance)) / 2.0;
-            }
+                if (currArea * prevArea < 0)
+                    flowBonus += ((osuCurrent.DistanceVector + osuPrevious.DistanceVector).Length / Math.Max(osuCurrent.JumpDistance, osuPrevious.JumpDistance)) / 2.0; // Bonus for when jumps change direction
 
-            return minVel * jumpNorm * (jumpAwk + angleAwk + flowBonus + sliderVel + jumpAwk * (angleAwk + flowBonus + angleBonus));
+                strain = currDistance / Math.Max(osuCurrent.StrainTime, osuPrevious.StrainTime);
+
+                area.Add(Tuple.Create(current.BaseObject.StartTime, currArea));
+            }
+            return strain * jumpNorm * jumpAwk * angleAwk * angleBonus * flowBonus * sliderVel;
         }
+
+        private double Det(OsuDifficultyHitObject curr, OsuDifficultyHitObject prev)
+        => curr.DistanceVector.X * prev.DistanceVector.Y - curr.DistanceVector.Y * prev.DistanceVector.X;
+
+        private double applyDiminishingExp(double val) => Math.Max(val - radius, 0.0);
+
+        private double applySinTransformation(double val) => Math.Pow(Math.Sin(pi_over_2 * val), 2.0);
     }
 }

@@ -3,7 +3,6 @@
 
 using System;
 using osu.Game.Rulesets.Difficulty.Preprocessing;
-using osu.Game.Rulesets.Difficulty.Skills;
 using osu.Game.Rulesets.Osu.Difficulty.Preprocessing;
 using osu.Game.Rulesets.Osu.Objects;
 
@@ -20,9 +19,11 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
 
         private const double pi_over_2 = Math.PI / 2.0;
 
-        protected override double SkillMultiplier => 25;
+        protected override double SkillMultiplier => 23;
         protected override double StrainDecayBase => StrainDecay;
-        protected override double StarMultiplierPerRepeat => 1.02;
+        protected override double StarMultiplierPerRepeat => 1.07;
+
+        private double radius;
 
         protected override double StrainValueOf(DifficultyHitObject current)
         {
@@ -36,22 +37,23 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                 (1.0 - Math.Pow(1.0 - StrainDecay, Math.Pow(2.0 + osuCurrent.TravelDistance / Math.Max(osuCurrent.TravelTime, 30.0), 3.0))) + 
                 Math.Max(30.0, osuCurrent.StrainTime - osuCurrent.TravelTime) / osuCurrent.StrainTime * StrainDecay;
 
+            if (radius == 0) radius = ((OsuHitObject)osuCurrent.BaseObject).Radius;
 
             double angleBonus = 0;
 
             double currDistance = applyDiminishingExp(osuCurrent.JumpDistance + osuCurrent.TravelDistance);
             double currDistanceStrain = currDistance / osuCurrent.StrainTime;
-            double currTravelStrain = osuCurrent.TravelTime != 0 ? applyDiminishingExp(osuCurrent.TravelDistance) / osuCurrent.TravelTime : 0;
+            double currTravelStrain = Math.Min(1.0, applyDiminishingExp(osuCurrent.TravelDistance) / osuCurrent.TravelTime);
 
             if (Previous.Count > 0)
             {
                 var osuPrevious = (OsuDifficultyHitObject)Previous[0];
                 double prevDistance = applyDiminishingExp(osuPrevious.JumpDistance + osuPrevious.TravelDistance);
                 double prevDistanceStrain = prevDistance / osuPrevious.StrainTime;
-                double geoStrain = Math.Sqrt(prevDistanceStrain * currDistanceStrain);
+                double geoDist = applyDiminishingExp(Math.Sqrt((osuPrevious.JumpDistance + osuPrevious.TravelDistance) * (osuCurrent.JumpDistance + osuCurrent.TravelDistance)));
                 double minDist = Math.Min(currDistance, prevDistance);
-                double jumpNorm = 0;
 
+                double jumpNorm = 0;
                 if (minDist > 175)
                     jumpNorm = 1.0;
                 else if (minDist > 125)
@@ -60,17 +62,17 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                 if (osuCurrent.Angle != null)
                 {
                     if (osuCurrent.Angle.Value > angle_bonus_end)
-                        angleBonus = geoStrain;
+                        angleBonus = geoDist;
                     else if (osuCurrent.Angle.Value > angle_bonus_begin)
-                        angleBonus = geoStrain * Math.Pow(Math.Sin(osuCurrent.Angle.Value - angle_bonus_begin), 2.0);
+                        angleBonus = geoDist * Math.Pow(Math.Sin(osuCurrent.Angle.Value - angle_bonus_begin), 2.0);
                 }
 
-                angleBonus *= jumpNorm;
+                angleBonus *= jumpNorm / Math.Max(osuPrevious.StrainTime, osuCurrent.StrainTime);
             }
 
             return currDistanceStrain + currTravelStrain + angleBonus;
         }
 
-        private double applyDiminishingExp(double val) => Math.Max(val - 45.0, 0.0);
+        private double applyDiminishingExp(double val) => Math.Max(val - radius, 0.0);
     }
 }

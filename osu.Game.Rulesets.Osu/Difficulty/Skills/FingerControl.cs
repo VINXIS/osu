@@ -2,8 +2,6 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using System;
-using System.Linq;
-using System.Collections.Generic;
 using osu.Game.Rulesets.Difficulty.Preprocessing;
 using osu.Game.Rulesets.Osu.Difficulty.Preprocessing;
 using osu.Game.Rulesets.Osu.Objects;
@@ -18,7 +16,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
         private double StrainDecay = 1.0;
         protected override double SkillMultiplier => 25.0;
         protected override double StrainDecayBase => StrainDecay;
-        protected override double StarMultiplierPerRepeat => 1.02;
+        protected override double StarMultiplierPerRepeat => 1.03;
 
         private int repeatStrainCount = 0;
 

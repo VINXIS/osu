@@ -76,6 +76,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Preprocessing
 
             // Every strain interval is hard capped at the equivalent of 375 BPM streaming speed as a safety measure
             StrainTime = Math.Max(50, DeltaTime);
+            TravelTime = Math.Max(50, TravelTime);
         }
 
         private void setDistances(double clockRate)
@@ -142,15 +143,16 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Preprocessing
                 var diff = slider.StackedPosition + slider.Path.PositionAt(progress) - slider.LazyEndPosition.Value;
                 float dist = diff.Length;
 
-                if (dist > approxFollowCircleRadius || t != slider.TailCircle.StartTime)
+                if (dist > approxFollowCircleRadius)
                 {
                     // The cursor would be outside the follow circle, we need to move it
                     diff.Normalize(); // Obtain direction of diff
                     dist -= approxFollowCircleRadius;
                     slider.LazyEndPosition += diff * dist;
-                    slider.LazyTravelDistance += Math.Max(0, dist);
-                    slider.LazyTravelTime = t - slider.StartTime;
+                    slider.LazyTravelDistance += dist;
                 }
+                if (t != slider.TailCircle.StartTime)
+                    slider.LazyTravelTime = t - slider.StartTime;
             });
 
             // Skip the head circle

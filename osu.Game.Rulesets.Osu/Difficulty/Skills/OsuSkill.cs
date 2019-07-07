@@ -84,6 +84,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
         private readonly List<double> powDifficulties = new List<double>(); // list of difficulty^k for each note
         private readonly List<double> timestamps = new List<double>(); // list of timestamps for each note
         private List<Tuple<double, double>> grapher = new List<Tuple<double, double>>();
+        public List<Tuple<double, double>> area = new List<Tuple<double, double>>();
         private double fcProb;
         private bool lastScaled;
 
@@ -176,6 +177,14 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
             {
                 foreach (Tuple<double, double> point in grapher)
                     outputFile.WriteLine(point);
+            }
+            if (this.GetType().Name.ToLower() == "aimcontrol")
+            {
+                using (StreamWriter outputFile = new StreamWriter(beatmapid + "area.txt"))
+                {
+                    foreach (Tuple<double, double> point in area)
+                        outputFile.WriteLine(point);
+                }
             }
 
             calculateSkillToFcSubsets(difficultyPartialSums);
