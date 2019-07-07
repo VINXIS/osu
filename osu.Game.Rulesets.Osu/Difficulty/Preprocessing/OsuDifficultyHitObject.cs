@@ -27,11 +27,6 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Preprocessing
         public double JumpDistance { get; private set; }
 
         /// <summary>
-        /// Normalized distance from the end position of the previous <see cref="OsuDifficultyHitObject"/> to the start position of this <see cref="OsuDifficultyHitObject"/> Ignoring lazy distance.
-        /// </summary>
-        public double EndJumpDistance { get; private set; }
-
-        /// <summary>
         /// Normalized distance between the start and end position of the previous <see cref="OsuDifficultyHitObject"/>.
         /// </summary>
         public double TravelDistance { get; private set; }
@@ -42,7 +37,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Preprocessing
         public double TravelTime { get; private set; }
 
         /// <summary>
-        /// The full time given to go through the start and end position of the previous <see cref="OsuDifficultyHitObject"/>.
+        /// The time given to go between the start and end position of the previous <see cref="OsuDifficultyHitObject"/>.
         /// </summary>
         public double TravelDuration { get; private set; }
 
@@ -51,12 +46,6 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Preprocessing
         /// Calculated as the angle between the circles (current-2, current-1, current).
         /// </summary>
         public double? Angle { get; private set; }
-
-        /// <summary>
-        /// The arc length created between circles (current-2, current-1, current).
-        /// </summary>
-        public double? ArcLength { get; private set; }
-
         /// <summary>
         /// Milliseconds elapsed since the start time of the previous <see cref="OsuDifficultyHitObject"/>, with a minimum of 50ms.
         /// </summary>
@@ -94,7 +83,6 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Preprocessing
                 TravelDistance = lastSlider.LazyTravelDistance * scalingFactor;
                 TravelTime = lastSlider.LazyTravelTime / clockRate;
                 TravelDuration = lastSlider.Duration / clockRate;
-                EndJumpDistance = (BaseObject.StackedPosition * scalingFactor - lastSlider.TailCircle.Position * scalingFactor).Length;
             }
 
             Vector2 lastCursorPosition = getEndCursorPosition(lastObject);
@@ -104,7 +92,6 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Preprocessing
             {
                 DistanceVector = (BaseObject.StackedPosition * scalingFactor - lastCursorPosition * scalingFactor);
                 JumpDistance = DistanceVector.Length;
-                if (EndJumpDistance == 0) EndJumpDistance = JumpDistance;
             }
 
             if (lastLastObject != null)
@@ -118,41 +105,6 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Preprocessing
                 float det = v1.X * v2.Y - v1.Y * v2.X;
 
                 Angle = Math.Abs(Math.Atan2(det, dot));
-
-                // Caclculate the arc length
-                if (Angle.Value >= 17.0 * Math.PI / 18.0)
-                    ArcLength = (v1 * scalingFactor).Length + (v2 * scalingFactor).Length;
-                else
-                {
-                    float slope1 = (lastObject.StackedPosition.Y - lastLastObject.StackedPosition.Y) / (lastObject.StackedPosition.X - lastLastObject.StackedPosition.X);
-                    float slope2 = (BaseObject.StackedPosition.Y - lastObject.StackedPosition.Y) / (BaseObject.StackedPosition.X - lastObject.StackedPosition.X);
-
-                    if (slope1 != slope2 && slope2 != 0)
-                    {
-                        Vector2 mid = new Vector2((BaseObject.StackedPosition.X + lastObject.StackedPosition.X) / 2, (BaseObject.StackedPosition.Y + lastObject.StackedPosition.Y) / 2);
-                        // See http://paulbourke.net/geometry/circlesphere/
-                        float centreX = (
-                            slope2 * slope1 * (BaseObject.StackedPosition.Y - lastLastObject.StackedPosition.Y) +
-                            slope1 * (BaseObject.StackedPosition.X + lastObject.StackedPosition.X) -
-                            slope2 * (lastObject.StackedPosition.X + lastLastObject.StackedPosition.X)
-                        ) / (2 * (slope1 - slope2));
-                        float centreY =  - (centreX - mid.X) / slope2 + mid.Y;
-
-                        Vector2 centre = new Vector2(centreX, centreY);
-
-                        Vector2 v3 = lastObject.StackedPosition - centre;
-                        Vector2 v4 = BaseObject.StackedEndPosition - centre;
-
-                        dot = Vector2.Dot(v3, v4);
-                        det = v3.X * v4.Y - v3.Y * v4.X;
-
-                        double internalAngle = Math.Abs(Math.Atan2(det, dot));
-
-                        ArcLength = internalAngle * Math.Min((v4 * scalingFactor).Length, (v3 * scalingFactor).Length);
-                    } else
-                        ArcLength = 0;
-                }
-
             }
         }
 

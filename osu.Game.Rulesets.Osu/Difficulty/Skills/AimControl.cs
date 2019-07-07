@@ -15,7 +15,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
     public class AimControl : OsuSkill
     {
         private double StrainDecay = 0.225;
-        protected override double SkillMultiplier => 20;
+        protected override double SkillMultiplier => 100;
         protected override double StrainDecayBase => StrainDecay;
         protected override double StarMultiplierPerRepeat => 1.07;
 
@@ -37,31 +37,24 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                 Math.Max(30.0, osuCurrent.StrainTime - osuCurrent.TravelTime) / osuCurrent.StrainTime * StrainDecay;
             if (radius == 0) radius = ((OsuHitObject)osuCurrent.BaseObject).Radius;
 
-            double strain = 0;
-            double jumpNorm = 0;
-
-            if (Previous.Count > 1 && osuCurrent.ArcLength != null)
+            double currDistance = applyDiminishingExp(osuCurrent.JumpDistance + osuCurrent.TravelDistance);
+            double currVel = currDistance / osuCurrent.StrainTime;
+            double flowChange = 0;
+            if (Previous.Count > 1)
             {
                 var osuPrevious = (OsuDifficultyHitObject)Previous[0];
-                
-                double flowStrain = osuCurrent.JumpDistance / (osuCurrent.StrainTime - 35);
-                double snapStrain = osuCurrent.ArcLength.Value / osuCurrent.StrainTime;
+                var osuPrevPrevious = (OsuDifficultyHitObject)Previous[1];
 
-                double minDist = Math.Min(osuCurrent.JumpDistance, osuPrevious.JumpDistance);
+                if (osuCurrent.JumpDistance != 0 && osuPrevPrevious.JumpDistance != 0 && osuPrevious.JumpDistance != 0)
+                {
+                    double currFlow = Projection(osuCurrent, osuPrevious).Length / osuCurrent.JumpDistance;
+                    double prevFlow = Projection(osuPrevious, osuPrevPrevious).Length / osuPrevious.JumpDistance;
 
-                if (minDist > 150)
-                    jumpNorm = 1.0;
-                else 
-                    jumpNorm = Math.Pow(Math.Sin(pi_over_2 * minDist / 150), 2.0);
-
-                if (snapStrain < flowStrain)
-                    strain = 1.5 * snapStrain;
-                if (snapStrain > flowStrain)
-                    strain = 1.5 * flowStrain;
-
-                area.Add(Tuple.Create(osuCurrent.BaseObject.StartTime, flowStrain));
+                    flowChange = Math.Pow(currFlow - prevFlow, 2.0);
+                    area.Add(Tuple.Create(osuCurrent.BaseObject.StartTime, flowChange));
+                }
             }
-            return jumpNorm * strain;
+            return currVel * flowChange;
         }
 
         private Vector2 Projection(OsuDifficultyHitObject curr, OsuDifficultyHitObject prev)
