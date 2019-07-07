@@ -42,8 +42,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
             double strain = 0;
             double jumpNorm = 0;
             double jumpAwk = 0;
-            double angleAwk = 0;
-            double angleBonus = 0;
+            double angleThresh = 0;
             double flowBonus = 1.0;
             double sliderVel = 1.0 + Math.Min(1.0, osuCurrent.TravelDistance / osuCurrent.TravelTime);
 
@@ -54,13 +53,13 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                 var osuPrevPrevious = (OsuDifficultyHitObject)Previous[1];
 
                 double prevDistance = applyDiminishingExp(osuPrevious.JumpDistance + osuPrevious.TravelDistance);
-                double diffDist = Math.Pow(currDistance - prevDistance, 2.0);
                 double minDist = Math.Min(currDistance, prevDistance);
-                double geoDist = Math.Sqrt(currDistance * prevDistance);
+                double diffDist = Math.Pow(osuCurrent.JumpDistance - osuPrevious.JumpDistance, 2.0);
+                double geoDist = Math.Sqrt(osuCurrent.JumpDistance * osuPrevious.JumpDistance);
 
-                double currArea = Det(osuCurrent, osuPrevious) / 2.0;
-                double prevArea = Det(osuPrevious, osuPrevPrevious) / 2.0;
-                double diffArea = Math.Pow(Math.Abs(currArea) - Math.Abs(prevArea), 2.0);
+                double currArea = Det(osuCurrent, osuPrevious);
+                double prevArea = Det(osuPrevious, osuPrevPrevious);
+                double diffArea = Math.Abs(Math.Abs(currArea) - Math.Abs(prevArea));
                 double geoArea = Math.Sqrt(Math.Abs(currArea) * Math.Abs(prevArea));
 
                 double areaChange = 0;
@@ -85,23 +84,21 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
 
                 if (osuCurrent.Angle != null && osuPrevious.Angle != null)
                 {
-                    angleAwk = Math.Pow(Math.Sin((osuCurrent.Angle.Value - osuPrevious.Angle.Value) / 1.5), 2.0); // Higher value for changing angles
-
                     double averageAngle = (osuCurrent.Angle.Value + osuPrevious.Angle.Value) / 2.0;
                     if (averageAngle > pi_over_4 && averageAngle < 3.0 * pi_over_4)
-                        angleBonus = Math.Pow(Math.Sin(averageAngle - pi_over_4), 2.0); // Bonus if both angles are wide
+                        angleThresh = Math.Pow(Math.Sin(averageAngle - pi_over_4), 2.0); // Bonus if both angles are wide
                     else if (averageAngle >= 3.0 * pi_over_4)
-                        angleBonus = 1.0;
+                        angleThresh = 1.0;
                 }
 
                 if (currArea * prevArea < 0)
                     flowBonus += ((osuCurrent.DistanceVector + osuPrevious.DistanceVector).Length / Math.Max(osuCurrent.JumpDistance, osuPrevious.JumpDistance)) / 2.0; // Bonus for when jumps change direction
 
-                strain = currDistance / Math.Max(osuCurrent.StrainTime, osuPrevious.StrainTime);
+                strain = currDistance / osuCurrent.StrainTime;
 
-                area.Add(Tuple.Create(current.BaseObject.StartTime, currArea));
+                area.Add(Tuple.Create(current.BaseObject.StartTime, diffArea));
             }
-            return strain * jumpNorm * jumpAwk * angleAwk * angleBonus * flowBonus * sliderVel;
+            return strain * jumpNorm * jumpAwk * flowBonus * sliderVel;
         }
 
         private double Det(OsuDifficultyHitObject curr, OsuDifficultyHitObject prev)

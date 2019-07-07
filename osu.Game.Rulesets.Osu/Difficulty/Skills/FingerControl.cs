@@ -19,7 +19,6 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
         protected override double StarMultiplierPerRepeat => 1.03;
 
         private int repeatStrainCount = 0;
-
         private int prevRepeatStrainCount = 0;
 
         protected override double StrainValueOf(DifficultyHitObject current)
@@ -32,19 +31,15 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
             double strain = Math.Pow(100.0 / osuCurrent.StrainTime, 0.45);
             double repeatVal = 0;
 
-            if (osuCurrent.BaseObject is Slider)
-                strain /= 4;
+            if (osuCurrent.BaseObject is Slider) strain /= 4;
 
-            if (Previous.Count <= 1)
-                return strain;
-
-            if (Previous.Count > 1)
+            if (Previous.Count > 0)
             {
                 var osuPrevious = (OsuDifficultyHitObject)Previous[0];
 
-                if (Math.Abs(osuCurrent.StrainTime - osuPrevious.StrainTime) > 5.0)
+                if (Math.Abs(osuCurrent.StrainTime - osuPrevious.StrainTime) > 4.0)
                 {
-                    if (Math.Abs(Math.Max(50, osuPrevious.StrainTime - osuPrevious.TravelDuration) - Math.Max(50, osuCurrent.StrainTime - osuCurrent.TravelDuration)) > 5.0)
+                    if (Math.Abs(Math.Max(50, osuPrevious.StrainTime - osuPrevious.TravelDuration) - Math.Max(50, osuCurrent.StrainTime - osuCurrent.TravelDuration)) > 4.0)
                     {
                         prevRepeatStrainCount = repeatStrainCount;
                         repeatStrainCount = 0;
@@ -56,7 +51,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                     }
                 } else
                     repeatStrainCount++;
-            }
+            } else return strain;
 
             repeatVal = 2.0 * Math.Pow(0.6, repeatStrainCount);
 
@@ -66,6 +61,6 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                 return strain * repeatVal / 2.0;
             else
                 return strain * repeatVal;
-        }
+        } 
     }
 }
