@@ -85,24 +85,22 @@ namespace osu.Game.Rulesets.Osu.Difficulty
                 Math.Pow(totalAimValue, total_factor) + 
                 Math.Pow(totalSpeedValue, total_factor), 1.0f / total_factor);
 
-            Random epicPPstuff = new Random();
-
             if (categoryRatings != null)
             {
-                categoryRatings.Add("Jump Aim", epicPPstuff.Next(1, 5000));
-                categoryRatings.Add("Stream Aim", epicPPstuff.Next(1, 5000));
-                categoryRatings.Add("Stamina", epicPPstuff.Next(1, 5000));
-                categoryRatings.Add("Speed", epicPPstuff.Next(1, 5000));
-                categoryRatings.Add("Aim Control", epicPPstuff.Next(1, 5000));
-                categoryRatings.Add("Finger Control", epicPPstuff.Next(1, 5000));
-                categoryRatings.Add("Total Aim", epicPPstuff.Next(1, 5000));
-                categoryRatings.Add("Total Speed", epicPPstuff.Next(1, 5000));
+                categoryRatings.Add("Jump Aim", jumpAimValue);
+                categoryRatings.Add("Stream Aim", streamAimValue);
+                categoryRatings.Add("Stamina", staminaValue);
+                categoryRatings.Add("Speed", speedValue);
+                categoryRatings.Add("Aim Control", aimControlValue);
+                categoryRatings.Add("Finger Control", fingerControlValue);
+                categoryRatings.Add("Total Aim", totalAimValue);
+                categoryRatings.Add("Total Speed", totalSpeedValue);
                 categoryRatings.Add("OD", Attributes.OverallDifficulty);
                 categoryRatings.Add("AR", Attributes.ApproachRate);
                 categoryRatings.Add("Max Combo", beatmapMaxCombo);
             }
 
-            return epicPPstuff.Next(1, 5000);
+            return totalValue;
         }
 
         private double interpComboStarRating(IList<double> values, double scoreCombo, double mapCombo)
