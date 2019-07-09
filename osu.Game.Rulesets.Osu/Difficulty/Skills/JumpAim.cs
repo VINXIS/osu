@@ -19,7 +19,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
 
         private const double pi_over_2 = Math.PI / 2.0;
 
-        protected override double SkillMultiplier => 23;
+        protected override double SkillMultiplier => 20;
         protected override double StrainDecayBase => StrainDecay;
 
         private double radius;
@@ -60,9 +60,9 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                 if (osuCurrent.Angle != null)
                 {
                     if (osuCurrent.Angle.Value > angle_bonus_end)
-                        angleBonus = 1.5 * geoDist;
+                        angleBonus = 2.0 * geoDist;
                     else if (osuCurrent.Angle.Value > angle_bonus_begin)
-                        angleBonus = 1.5 * geoDist * Math.Pow(Math.Sin(osuCurrent.Angle.Value - angle_bonus_begin), 2.0);
+                        angleBonus = 2.0 * geoDist * Math.Pow(Math.Sin(osuCurrent.Angle.Value - angle_bonus_begin), 2.0);
                 }
 
                 angleBonus *= jumpNorm / Math.Max(osuPrevious.StrainTime, osuCurrent.StrainTime);
