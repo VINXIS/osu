@@ -36,7 +36,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
         /// Repeating a section multiplies difficulty by this factor
         /// Increasing this number increases the impact of map length on SR and decreases the impact of difficulty spikes.
         /// </summary>
-        protected virtual double StarMultiplierPerRepeat => 1.0677;
+        protected virtual double StarMultiplierPerRepeat => 1.04;
 
         private double starBonusK => 1 / Math.Log(StarMultiplierPerRepeat, 2);
 

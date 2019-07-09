@@ -21,7 +21,6 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
 
         protected override double SkillMultiplier => 23;
         protected override double StrainDecayBase => StrainDecay;
-        protected override double StarMultiplierPerRepeat => 1.07;
 
         private double radius;
 
@@ -43,7 +42,6 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
 
             double currDistance = applyDiminishingExp(osuCurrent.JumpDistance + osuCurrent.TravelDistance);
             double currDistanceStrain = currDistance / osuCurrent.StrainTime;
-            double currTravelStrain = Math.Min(1.0, applyDiminishingExp(osuCurrent.TravelDistance) / osuCurrent.TravelTime);
 
             if (Previous.Count > 0)
             {
@@ -62,15 +60,15 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                 if (osuCurrent.Angle != null)
                 {
                     if (osuCurrent.Angle.Value > angle_bonus_end)
-                        angleBonus = geoDist;
+                        angleBonus = 1.5 * geoDist;
                     else if (osuCurrent.Angle.Value > angle_bonus_begin)
-                        angleBonus = geoDist * Math.Pow(Math.Sin(osuCurrent.Angle.Value - angle_bonus_begin), 2.0);
+                        angleBonus = 1.5 * geoDist * Math.Pow(Math.Sin(osuCurrent.Angle.Value - angle_bonus_begin), 2.0);
                 }
 
                 angleBonus *= jumpNorm / Math.Max(osuPrevious.StrainTime, osuCurrent.StrainTime);
             }
 
-            return currDistanceStrain + currTravelStrain + angleBonus;
+            return currDistanceStrain + angleBonus;
         }
 
         private double applyDiminishingExp(double val) => Math.Max(val - radius, 0.0);
