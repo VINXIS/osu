@@ -15,7 +15,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
     public class AimControl : OsuSkill
     {
         private double StrainDecay = 0.225;
-        protected override double SkillMultiplier => 150;
+        protected override double SkillMultiplier => 1.5;
         protected override double StrainDecayBase => StrainDecay;
         private const double pi_over_2 = Math.PI / 2.0;
         private const double pi_over_4 = Math.PI / 4.0;
@@ -42,7 +42,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
 
             double strain = 0;
 
-            if (Previous.Count > 0 && osuCurrent.Angle != null)
+            if (Previous.Count > 0)
             {
                 var osuPrevious = (OsuDifficultyHitObject)Previous[0];
                 double prevDistance = applyDiminishingExp(osuPrevious.JumpDistance + osuPrevious.TravelDistance);
@@ -53,9 +53,12 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                 double maxDist = Math.Max(Math.Max(currDistance, prevDistance), valThresh);
                 double minDist = Math.Max(Math.Min(currDistance, prevDistance), valThresh);
 
-                jumpAwk = diffDist * minDist / maxDist;
+                if (minDist < 150)
+                    minDist = applySinTransformation(minDist / 150);
 
-                strain = Math.Pow(jumpAwk / Math.Max(osuCurrent.StrainTime, osuPrevious.StrainTime), 2.0);
+                jumpAwk = Math.Pow(diffDist * minDist / maxDist, 2.0);
+
+                strain = jumpAwk / Math.Max(osuCurrent.StrainTime, osuPrevious.StrainTime);
             }
 
             test.Add(Tuple.Create(current.BaseObject.StartTime, strain));
