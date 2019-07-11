@@ -15,9 +15,9 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
     public class AimControl : OsuSkill
     {
         private double StrainDecay = 0.45;
-        protected override double SkillMultiplier => 17500;
+        protected override double SkillMultiplier => 10500;
         protected override double StrainDecayBase => StrainDecay;
-        protected override double StarMultiplierPerRepeat => 1.06;
+        protected override double StarMultiplierPerRepeat => 1.03;
 
         private const double pi_over_2 = Math.PI / 2.0;
         private const double pi_over_4 = Math.PI / 4.0;
@@ -40,14 +40,16 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
             test.Add(Tuple.Create(current.BaseObject.StartTime, 0.0));
 
             double strain = 0;
-            double sliderVel = osuCurrent.TravelDistance / osuCurrent.TravelTime;
+            double sliderVel = 1.0 + Math.Min(1.0, osuCurrent.TravelDistance / osuCurrent.TravelTime);
 
-            if (Previous.Count > 0)
+            if (Previous.Count > 1)
             {
                 var osuPrevious = (OsuDifficultyHitObject)Previous[0];
+                var osuPrevPrevious = (OsuDifficultyHitObject)Previous[1];
                 double distScale = 1.0;
                 double jumpAwk = 0;
                 double angleBonus = 1.0;
+                double flowBonus = 1.0;
 
                 double currDistance = applyDiminishingExp(osuCurrent.JumpDistance + osuCurrent.TravelDistance);
                 double prevDistance = applyDiminishingExp(osuPrevious.JumpDistance + osuPrevious.TravelDistance);
@@ -59,11 +61,13 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                 if (minDist < 150) distScale = applySinTransformation(minDist / 150);
                 angleBonus += Math.Pow(Math.Sin(osuCurrent.Angle.Value / 2.0), 2.0);
                 jumpAwk = diffDist / maxDist;
-                test.Add(Tuple.Create(current.BaseObject.StartTime, jumpAwk));
+                if (Det(osuCurrent, osuPrevious) * Det(osuPrevious, osuPrevPrevious) < 0)
+                    flowBonus += ((osuCurrent.DistanceVector + osuPrevious.DistanceVector).Length / Math.Max(osuCurrent.JumpDistance, osuPrevious.JumpDistance)) / 2.0;
 
-                strain = distScale * jumpAwk / Math.Max(osuCurrent.StrainTime, osuPrevious.StrainTime);
+                test.Add(Tuple.Create(current.BaseObject.StartTime, jumpAwk));
+                strain = distScale * jumpAwk * flowBonus / Math.Max(osuCurrent.StrainTime, osuPrevious.StrainTime);
             }
-            return strain;
+            return strain * sliderVel;
         }
 
         private Vector2 Projection(OsuDifficultyHitObject curr, OsuDifficultyHitObject prev)	
