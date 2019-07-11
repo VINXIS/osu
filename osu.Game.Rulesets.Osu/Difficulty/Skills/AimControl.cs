@@ -14,8 +14,8 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
     /// </summary>
     public class AimControl : OsuSkill
     {
-        private double StrainDecay = 0.225;
-        protected override double SkillMultiplier => 1.5;
+        private double StrainDecay = 0.45;
+        protected override double SkillMultiplier => 70;
         protected override double StrainDecayBase => StrainDecay;
         private const double pi_over_2 = Math.PI / 2.0;
         private const double pi_over_4 = Math.PI / 4.0;
@@ -25,7 +25,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
 
         protected override double StrainValueOf(DifficultyHitObject current)
         {
-            StrainDecay = 0.225;
+            StrainDecay = 0.45;
 
             if (current.BaseObject is Spinner)
                 return 0;
@@ -38,32 +38,37 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
 
             test.Add(Tuple.Create(current.BaseObject.StartTime, 0.0));
 
-            double currDistance = applyDiminishingExp(osuCurrent.JumpDistance + osuCurrent.TravelDistance);
-
             double strain = 0;
+            double sliderVel = osuCurrent.TravelDistance / osuCurrent.TravelTime;
 
-            if (Previous.Count > 0)
+            if (Previous.Count > 1)
             {
                 var osuPrevious = (OsuDifficultyHitObject)Previous[0];
-                double prevDistance = applyDiminishingExp(osuPrevious.JumpDistance + osuPrevious.TravelDistance);
-
                 double jumpAwk = 0;
+                double angleBonus = 1.0;
 
+                double currDistance = applyDiminishingExp(osuCurrent.JumpDistance + osuCurrent.TravelDistance);
+                double prevDistance = applyDiminishingExp(osuPrevious.JumpDistance + osuPrevious.TravelDistance);
+                
                 double diffDist = Math.Abs(currDistance - prevDistance);
                 double maxDist = Math.Max(Math.Max(currDistance, prevDistance), valThresh);
-                double minDist = Math.Max(Math.Min(currDistance, prevDistance), valThresh);
+                double minDist = Math.Min(currDistance, prevDistance);
 
-                if (minDist < 150)
-                    minDist = applySinTransformation(minDist / 150);
+                angleBonus += Math.Pow(Math.Sin(osuCurrent.Angle.Value / 2.0), 2.0) + Math.Pow(Math.Sin((osuCurrent.Angle.Value - osuPrevious.Angle.Value) / 2.0), 2.0);
 
-                jumpAwk = Math.Pow(diffDist * minDist / maxDist, 2.0);
+                jumpAwk = diffDist * minDist / maxDist;
+                test.Add(Tuple.Create(current.BaseObject.StartTime, angleBonus));
 
-                strain = jumpAwk / Math.Max(osuCurrent.StrainTime, osuPrevious.StrainTime);
+                strain = Math.Pow(jumpAwk * angleBonus / Math.Max(osuCurrent.StrainTime, osuPrevious.StrainTime), 2.0);
             }
-
-            test.Add(Tuple.Create(current.BaseObject.StartTime, strain));
             return strain;
         }
+
+        private Vector2 Projection(OsuDifficultyHitObject curr, OsuDifficultyHitObject prev)	
+        => Vector2.Multiply(prev.DistanceVector.Normalized(), Vector2.Dot(curr.DistanceVector, prev.DistanceVector.Normalized()));
+
+        private double Det(OsuDifficultyHitObject curr, OsuDifficultyHitObject prev)
+        => curr.DistanceVector.X * prev.DistanceVector.Y - curr.DistanceVector.Y * prev.DistanceVector.X;
 
         private double applyDiminishingExp(double val) => Math.Max(val - radius, 0.0);
 
