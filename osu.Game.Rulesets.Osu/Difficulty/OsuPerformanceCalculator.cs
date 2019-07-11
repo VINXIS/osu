@@ -324,11 +324,6 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             // Penalize misses exponentially.
             staminaValue *= Math.Pow(0.99f, countMiss);
 
-            // Scale with acc and OD
-            double ODScale = 10.0f + Attributes.OverallDifficulty / 20.0f;
-            double accScale = Math.Pow(accuracy, 20.0f - Attributes.OverallDifficulty) / 7.0f;
-            staminaValue *= ODScale * accScale;
-
             if (categoryRatings != null)
             {
                 categoryRatings.Add("Stamina Combo Stars", staminaComboStarRating);
@@ -351,11 +346,6 @@ namespace osu.Game.Rulesets.Osu.Difficulty
 
             // Penalize misses exponentially.
             speedValue *= Math.Pow(0.99f, countMiss);
-
-            // Scale with acc and OD
-            double ODScale = 10.0f + Attributes.OverallDifficulty / 20.0f;
-            double accScale = Math.Pow(accuracy, 20.0f - Attributes.OverallDifficulty) / 7.0f;
-            speedValue *= ODScale * accScale;
 
             if (categoryRatings != null)
             {
@@ -385,11 +375,6 @@ namespace osu.Game.Rulesets.Osu.Difficulty
 
             // Penalize misses exponentially.
             fingerControlValue *= Math.Pow(0.99f, countMiss);
-
-            // Scale with acc and OD
-            double ODScale = 10.0f + Attributes.OverallDifficulty / 20.0f;
-            double accScale = Math.Pow(accuracy, 20.0f - Attributes.OverallDifficulty) / 7.0f;
-            fingerControlValue *= ODScale * accScale;
 
             if (categoryRatings != null)
             {

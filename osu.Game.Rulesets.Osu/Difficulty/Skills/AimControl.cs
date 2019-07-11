@@ -48,7 +48,6 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                 var osuPrevPrevious = (OsuDifficultyHitObject)Previous[1];
                 double distScale = 1.0;
                 double jumpAwk = 0;
-                double angleBonus = 1.0;
                 double flowBonus = 1.0;
 
                 double currDistance = applyDiminishingExp(osuCurrent.JumpDistance + osuCurrent.TravelDistance);
@@ -59,7 +58,6 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                 double minDist = Math.Max(Math.Min(currDistance, prevDistance), valThresh);
                 
                 if (minDist < 150) distScale = applySinTransformation(minDist / 150);
-                angleBonus += Math.Pow(Math.Sin(osuCurrent.Angle.Value / 2.0), 2.0);
                 jumpAwk = diffDist / maxDist;
                 if (Det(osuCurrent, osuPrevious) * Det(osuPrevious, osuPrevPrevious) < 0)
                     flowBonus += ((osuCurrent.DistanceVector + osuPrevious.DistanceVector).Length / Math.Max(osuCurrent.JumpDistance, osuPrevious.JumpDistance)) / 2.0;
