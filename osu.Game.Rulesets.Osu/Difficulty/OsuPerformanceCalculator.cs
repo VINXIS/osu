@@ -186,7 +186,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
 
             double jumpAimValue = Math.Pow(5.0f * Math.Max(1.0f, rawJumpAim / 0.0675f) - 4.0f, 3.0f) / 100000.0f;
 
-            // discourage misses
+            // Penalize misses exponentially.
             jumpAimValue *= Math.Pow(0.95, countMiss);
 
             double approachRateFactor = 1.0f;
@@ -316,7 +316,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
 
         private double computeStaminaValue(Dictionary<string, double> categoryRatings = null)
         {
-            double staminaComboStarRating = interpComboStarRating(Attributes.StaminaComboStarRatings, scoreMaxCombo, beatmapMaxCombo);
+            double staminaComboStarRating = interpComboStarRating(Attributes.StaminaComboStarRatings, accuracy, 1);
             double staminaMissCountStarRating = interpMissCountStarRating(Attributes.StaminaComboStarRatings.Last(), Attributes.StaminaMissCounts, countMiss);
             double rawStamina = Math.Pow(staminaComboStarRating, combo_weight) * Math.Pow(staminaMissCountStarRating, 1 - combo_weight);
             double staminaValue = Math.Pow(5.0f * Math.Max(1.0f, rawStamina / 0.0675f) - 4.0f, 3.0f) / 100000.0f;
@@ -340,7 +340,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
 
         private double computeSpeedValue(Dictionary<string, double> categoryRatings = null)
         {
-            double speedComboStarRating = interpComboStarRating(Attributes.SpeedComboStarRatings, scoreMaxCombo, beatmapMaxCombo);
+            double speedComboStarRating = interpComboStarRating(Attributes.SpeedComboStarRatings, accuracy, 1);
             double speedMissCountStarRating = interpMissCountStarRating(Attributes.SpeedComboStarRatings.Last(), Attributes.SpeedMissCounts, countMiss);
             double rawSpeed = Math.Pow(speedComboStarRating, combo_weight) * Math.Pow(speedMissCountStarRating, 1 - combo_weight);
 
@@ -368,7 +368,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
 
         private double computeFingerControlValue(Dictionary<string, double> categoryRatings = null)
         {
-            double fingerControlComboStarRating = interpComboStarRating(Attributes.FingerControlComboStarRatings, scoreMaxCombo, beatmapMaxCombo);
+            double fingerControlComboStarRating = interpComboStarRating(Attributes.FingerControlComboStarRatings, accuracy, 1);
             double fingerControlMissCountStarRating = interpMissCountStarRating(Attributes.FingerControlComboStarRatings.Last(), Attributes.FingerControlMissCounts, countMiss);
             double rawFingerControl = Math.Pow(fingerControlComboStarRating, combo_weight) * Math.Pow(fingerControlMissCountStarRating, 1 - combo_weight);
 

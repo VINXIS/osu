@@ -15,11 +15,12 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
     public class AimControl : OsuSkill
     {
         private double StrainDecay = 0.45;
-        protected override double SkillMultiplier => 70;
+        protected override double SkillMultiplier => 17500;
         protected override double StrainDecayBase => StrainDecay;
+        protected override double StarMultiplierPerRepeat => 1.06;
+
         private const double pi_over_2 = Math.PI / 2.0;
         private const double pi_over_4 = Math.PI / 4.0;
-
         private const double valThresh = 0.1;
         private double radius;
 
@@ -41,9 +42,10 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
             double strain = 0;
             double sliderVel = osuCurrent.TravelDistance / osuCurrent.TravelTime;
 
-            if (Previous.Count > 1)
+            if (Previous.Count > 0)
             {
                 var osuPrevious = (OsuDifficultyHitObject)Previous[0];
+                double distScale = 1.0;
                 double jumpAwk = 0;
                 double angleBonus = 1.0;
 
@@ -52,14 +54,14 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                 
                 double diffDist = Math.Abs(currDistance - prevDistance);
                 double maxDist = Math.Max(Math.Max(currDistance, prevDistance), valThresh);
-                double minDist = Math.Min(currDistance, prevDistance);
+                double minDist = Math.Max(Math.Min(currDistance, prevDistance), valThresh);
+                
+                if (minDist < 150) distScale = applySinTransformation(minDist / 150);
+                angleBonus += Math.Pow(Math.Sin(osuCurrent.Angle.Value / 2.0), 2.0);
+                jumpAwk = diffDist / maxDist;
+                test.Add(Tuple.Create(current.BaseObject.StartTime, jumpAwk));
 
-                angleBonus += Math.Pow(Math.Sin(osuCurrent.Angle.Value / 2.0), 2.0) + Math.Pow(Math.Sin((osuCurrent.Angle.Value - osuPrevious.Angle.Value) / 2.0), 2.0);
-
-                jumpAwk = diffDist * minDist / maxDist;
-                test.Add(Tuple.Create(current.BaseObject.StartTime, angleBonus));
-
-                strain = Math.Pow(jumpAwk * angleBonus / Math.Max(osuCurrent.StrainTime, osuPrevious.StrainTime), 2.0);
+                strain = distScale * jumpAwk / Math.Max(osuCurrent.StrainTime, osuPrevious.StrainTime);
             }
             return strain;
         }

@@ -90,8 +90,8 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             "\nAim Control: " + Math.Round(aimControlRating, 2) + 
             "\nFinger Control: " + Math.Round(fingerControlRating, 2) +
             "\n---" +
-            "\nAim SR: " + Math.Round(totalAimRating, 2) +
-            "\nSpeed SR: " + Math.Round(totalSpeedRating, 2) +
+            "\nAim SR: " + Math.Round(StarTransformation(totalAimRating), 2) +
+            "\nSpeed SR: " + Math.Round(StarTransformation(totalSpeedRating), 2) +
             "\nSR: " + Math.Round(starRating, 2);
 
             using (StreamWriter outputFile = new StreamWriter(beatmap.BeatmapInfo.OnlineBeatmapID + "values.txt"))

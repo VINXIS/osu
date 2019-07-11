@@ -21,6 +21,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
 
         protected override double SkillMultiplier => 20;
         protected override double StrainDecayBase => StrainDecay;
+        protected override double StarMultiplierPerRepeat => 1.04;
 
         private double radius;
 
