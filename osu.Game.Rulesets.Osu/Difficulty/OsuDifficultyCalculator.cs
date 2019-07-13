@@ -20,9 +20,9 @@ namespace osu.Game.Rulesets.Osu.Difficulty
     public class OsuDifficultyCalculator : DifficultyCalculator
     {
         private const double difficulty_multiplier = 0.0675;
-        private const double star_rating_scale_factor = 1.3;
-        private const double star_factor = 0.5;
-        private const double total_star_factor = 4.0;
+        private const double star_rating_scale_factor = 7.0;
+        private const double star_factor = 2.0;
+        private const double total_star_factor = 2.0;
 
         public OsuDifficultyCalculator(Ruleset ruleset, WorkingBeatmap beatmap)
             : base(ruleset, beatmap)

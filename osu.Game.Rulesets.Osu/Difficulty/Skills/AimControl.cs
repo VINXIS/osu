@@ -15,9 +15,9 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
     public class AimControl : OsuSkill
     {
         private double StrainDecay = 0.45;
-        protected override double SkillMultiplier => 10500;
+        protected override double SkillMultiplier => 10000;
         protected override double StrainDecayBase => StrainDecay;
-        protected override double StarMultiplierPerRepeat => 1.03;
+        protected override double StarMultiplierPerRepeat => 1.04;
 
         private const double pi_over_2 = Math.PI / 2.0;
         private const double pi_over_4 = Math.PI / 4.0;
@@ -48,7 +48,6 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                 var osuPrevPrevious = (OsuDifficultyHitObject)Previous[1];
                 double distScale = 1.0;
                 double jumpAwk = 0;
-                double flowBonus = 1.0;
 
                 double currDistance = applyDiminishingExp(osuCurrent.JumpDistance + osuCurrent.TravelDistance);
                 double prevDistance = applyDiminishingExp(osuPrevious.JumpDistance + osuPrevious.TravelDistance);
@@ -59,11 +58,9 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                 
                 if (minDist < 150) distScale = applySinTransformation(minDist / 150);
                 jumpAwk = diffDist / maxDist;
-                if (Det(osuCurrent, osuPrevious) * Det(osuPrevious, osuPrevPrevious) < 0)
-                    flowBonus += ((osuCurrent.DistanceVector + osuPrevious.DistanceVector).Length / Math.Max(osuCurrent.JumpDistance, osuPrevious.JumpDistance)) / 2.0;
 
                 test.Add(Tuple.Create(current.BaseObject.StartTime, jumpAwk));
-                strain = distScale * jumpAwk * flowBonus / Math.Max(osuCurrent.StrainTime, osuPrevious.StrainTime);
+                strain = distScale * jumpAwk / Math.Max(osuCurrent.StrainTime, osuPrevious.StrainTime);
             }
             return strain * sliderVel;
         }

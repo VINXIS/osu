@@ -30,8 +30,8 @@ namespace osu.Game.Rulesets.Osu.Difficulty
         private int countMeh;
         private int countMiss;
         private const double combo_weight = 0.5;
-        private const double pp_factor = 0.5f;
-        private const double total_factor = 4.0f;
+        private const double pp_factor = 1.5f;
+        private const double total_factor = 2.5f;
 
         public OsuPerformanceCalculator(Ruleset ruleset, WorkingBeatmap beatmap, ScoreInfo score)
             : base(ruleset, beatmap, score)
