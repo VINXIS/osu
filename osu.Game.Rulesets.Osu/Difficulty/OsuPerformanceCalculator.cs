@@ -62,7 +62,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
                 return 0;
 
             // Custom multipliers for NoFail and SpunOut.
-            double multiplier = 1.5f; // This is being adjusted to keep the final pp value scaled around what it used to be when changing things
+            double multiplier = 1.23f; // This is being adjusted to keep the final pp value scaled around what it used to be when changing things
 
             if (mods.Any(m => m is OsuModNoFail))
                 multiplier *= 0.90f;
@@ -420,66 +420,17 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             double accThreshold = 0.99995f;
 
             double circleAccuracy = 0;
-            if (countHitCircles > 0) circleAccuracy = Math.Max(0.0f, 1.0f - (1.0f - accuracy) * totalHits / countHitCircles);
+            if (countHitCircles > 0) circleAccuracy = Math.Min(accThreshold, Math.Max(0.0f, 1.0f - (1.0f - accuracy) * totalHits / countHitCircles));
 
             // Slider sigma calculations
-            double sliderConst = Math.Pow(zScore, 2.0f) / Math.Max(30, countSliders);
-            double sliderProbability = (accuracy + sliderConst - Math.Sqrt(sliderConst * accuracy + Math.Pow(sliderConst, 2.0f) - 2.0f * sliderConst * Math.Pow(accuracy, 2.0f))) / (1.0f + 2.0f * sliderConst);
-            sigmaSlider = (199.5f - 10.0f * Attributes.OverallDifficulty) / (sqrt2 * SpecialFunctions.ErfInv(2.0f * sliderProbability - 1.0f));
-
-            if (countHitCircles < 2) // Return sigmaSlider only if there are no circles as 0 circles will break circle sigma calculations
-                return accMultiplier * Math.Pow(accScale, -sigmaSlider);
+            double sliderConst = Math.Sqrt(2.0f / countSliders) * zScore;
+            double sliderProbability = (2.0f * accuracy + Math.Pow(sliderConst, 2.0f) - sliderConst * Math.Sqrt(4.0f * accuracy + Math.Pow(sliderConst, 2.0f) - 4.0f * Math.Pow(accuracy, 2.0f))) / (2.0f  + 2.0f * Math.Pow(sliderConst, 2.0f));
+            sigmaSlider = (199.5f - 10.0f * Attributes.OverallDifficulty) / (sqrt2 * SpecialFunctions.ErfInv(sliderProbability));
             
             // Circle sigma calculations
-            // Constants for sigma guessing, mean/sd 1 are for OD slope, mean/sd 2 are for OD intercept
-            double ExpectedVal(double s, double MS) => SpecialFunctions.Erf(MS / (sqrt2 * s));
-            double mean1 = -6.635f;
-            double mean2 = 88.485f;
-            double sd1 = 1.0f / 0.518926f;
-            double sd2 = 1.0f / 0.0386966f;
-            double precision = 0.01f;
-
-            // Sigma guesses
-            double s1 = Attributes.OverallDifficulty * (mean1 + SpecialFunctions.ErfInv(2.0f * Math.Min(accThreshold, circleAccuracy) - 1.0f) * sd1 * sqrt2) + 
-                mean2 - SpecialFunctions.ErfInv(2.0f * Math.Min(accThreshold, circleAccuracy) - 1.0f) * sd2 * sqrt2;
-            double s2 = Attributes.OverallDifficulty * (mean1 + SpecialFunctions.ErfInv(2.0f * Math.Min(accThreshold, (circleAccuracy - Math.Sqrt(2.0f / (countHitCircles - 1.0f)))) - 1.0f) * sd1 * sqrt2) + 
-                mean2 - SpecialFunctions.ErfInv(2.0f * Math.Min(accThreshold, (circleAccuracy - Math.Sqrt(2.0f / (countHitCircles - 1.0f)))) - 1.0f) * sd2 * sqrt2;
-
-            while (Math.Abs(s2 - s1) > precision) // Compare expected values for both sigmas and the sigma average to bring the difference to a precise enough value
-            {
-                double sAvg = (s1 + s2) / 2.0f;
-
-                double Expected300s1 = ExpectedVal(s1, 79.5f - 6.0f * Attributes.OverallDifficulty);
-                double Expected100s1 = ExpectedVal(s1, 139.5f - 8.0f * Attributes.OverallDifficulty);
-                double Expected50s1 = ExpectedVal(s1, 199.5f - 10.0f * Attributes.OverallDifficulty);
-                double ExpectedVarSquareds1 = 8.0f * Expected300s1 / 9.0f + Expected100s1 / 12.0f + Expected50s1 / 36.0f;
-                double means1 = 2.0f * Expected300s1 / 3.0f + (Expected100s1 + Expected50s1) / 6.0f;
-                double sds1 = Math.Sqrt(ExpectedVarSquareds1 - Math.Pow(means1, 2.0f));
-                double s1Val = circleAccuracy - means1 - Math.Sqrt(2.0f / countHitCircles) * zScore * sds1;
-
-                double Expected300s2 = ExpectedVal(s2, 79.5f - 6.0f * Attributes.OverallDifficulty);
-                double Expected100s2 = ExpectedVal(s2, 139.5f - 8.0f * Attributes.OverallDifficulty);
-                double Expected50s2 = ExpectedVal(s2, 199.5f - 10.0f * Attributes.OverallDifficulty);
-                double ExpectedVarSquareds2 = 8.0f * Expected300s2 / 9.0f + Expected100s2 / 12.0f + Expected50s2 / 36.0f;
-                double means2 = 2.0f * Expected300s2 / 3.0f + (Expected100s2 + Expected50s2) / 6.0f;
-                double sds2 = Math.Sqrt(ExpectedVarSquareds2 - Math.Pow(means2, 2.0f));
-                double s2Val = circleAccuracy - means2 - Math.Sqrt(2.0f / countHitCircles) * zScore * sds2;
-
-                double Expected300sAvg = ExpectedVal(sAvg, 79.5f - 6.0f * Attributes.OverallDifficulty);
-                double Expected100sAvg = ExpectedVal(sAvg, 139.5f - 8.0f * Attributes.OverallDifficulty);
-                double Expected50sAvg = ExpectedVal(sAvg, 199.5f - 10.0f * Attributes.OverallDifficulty);
-                double ExpectedVarSquaredsAvg = 8.0f * Expected300sAvg / 9.0f + Expected100sAvg / 12.0f + Expected50sAvg / 36.0f;
-                double meansAvg = 2.0f * Expected300sAvg / 3.0f + (Expected100sAvg + Expected50sAvg) / 6.0f;
-                double sdsAvg = Math.Sqrt(ExpectedVarSquaredsAvg - Math.Pow(meansAvg, 2.0f));
-                double sAvgVal = circleAccuracy - meansAvg - Math.Sqrt(2.0f / countHitCircles) * zScore * sdsAvg;
-
-                if (sAvgVal * s1Val > 0)
-                    s1 = sAvg;
-                else if (sAvgVal * s2Val > 0)
-                    s2 = sAvg;
-            }
-
-            sigmaCircle = (s1 + s2) / 2.0f;
+            double circleConst = Math.Sqrt(2.0f / countHitCircles) * zScore;
+            double circleProbability = (2.0f * circleAccuracy + Math.Pow(circleConst, 2.0f) - circleConst * Math.Sqrt(4.0f * circleAccuracy + Math.Pow(circleConst, 2.0f) - 4.0f * Math.Pow(circleAccuracy, 2.0f))) / (2.0f  + 2.0f * Math.Pow(circleConst, 2.0f));
+            sigmaCircle = (79.5f - 6.0f * Attributes.OverallDifficulty) / (sqrt2 * SpecialFunctions.ErfInv(circleProbability));
 
             if (sigmaSlider == 0) return accMultiplier * Math.Pow(accScale, -sigmaCircle);
             if (sigmaCircle == 0) return accMultiplier * Math.Pow(accScale, -sigmaSlider);
