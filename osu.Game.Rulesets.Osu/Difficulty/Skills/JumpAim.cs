@@ -61,9 +61,9 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                 if (osuCurrent.Angle != null)
                 {
                     if (osuCurrent.Angle.Value > angle_bonus_end)
-                        angleBonus = 2.0 * geoDist;
+                        angleBonus = 2.5 * geoDist;
                     else if (osuCurrent.Angle.Value > angle_bonus_begin)
-                        angleBonus = 2.0 * geoDist * Math.Pow(Math.Sin(osuCurrent.Angle.Value - angle_bonus_begin), 2.0);
+                        angleBonus = 2.5 * geoDist * Math.Pow(Math.Sin(osuCurrent.Angle.Value - angle_bonus_begin), 2.0);
                 }
 
                 angleBonus *= jumpNorm / Math.Max(osuPrevious.StrainTime, osuCurrent.StrainTime);
