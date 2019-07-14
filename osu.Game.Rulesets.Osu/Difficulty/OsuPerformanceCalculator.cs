@@ -30,8 +30,9 @@ namespace osu.Game.Rulesets.Osu.Difficulty
         private int countMeh;
         private int countMiss;
         private const double combo_weight = 0.5;
-        private const double pp_factor = 1.5f;
-        private const double total_factor = 2.5f;
+        private const double aim_pp_factor = 1.5f;
+        private const double speed_pp_factor = 2.5f;
+        private const double total_factor = 1.1f;
 
         public OsuPerformanceCalculator(Ruleset ruleset, WorkingBeatmap beatmap, ScoreInfo score)
             : base(ruleset, beatmap, score)
@@ -58,7 +59,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
                 return 0;
 
             // Custom multipliers for NoFail and SpunOut.
-            double multiplier = 0.5f; // This is being adjusted to keep the final pp value scaled around what it used to be when changing things
+            double multiplier = 1.75f; // This is being adjusted to keep the final pp value scaled around what it used to be when changing things
 
             if (mods.Any(m => m is OsuModNoFail))
                 multiplier *= 0.90f;
@@ -74,13 +75,13 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             double fingerControlValue = computeFingerControlValue(categoryRatings);
 
             double totalAimValue = Math.Pow(
-                Math.Pow(jumpAimValue, pp_factor) + 
-                Math.Pow(streamAimValue, pp_factor) + 
-                Math.Pow(aimControlValue, pp_factor), 1.0f / pp_factor);
+                Math.Pow(jumpAimValue, aim_pp_factor) + 
+                Math.Pow(streamAimValue, aim_pp_factor) + 
+                Math.Pow(aimControlValue, aim_pp_factor), 1.0f / aim_pp_factor);
             double totalSpeedValue = Math.Pow(
-                Math.Pow(staminaValue, pp_factor) + 
-                Math.Pow(speedValue, pp_factor) + 
-                Math.Pow(fingerControlValue, pp_factor), 1.0f / pp_factor);
+                Math.Pow(staminaValue, speed_pp_factor) + 
+                Math.Pow(speedValue, speed_pp_factor) + 
+                Math.Pow(fingerControlValue, speed_pp_factor), 1.0f / speed_pp_factor);
             double totalValue = multiplier * Math.Pow(
                 Math.Pow(totalAimValue, total_factor) + 
                 Math.Pow(totalSpeedValue, total_factor), 1.0f / total_factor);
@@ -316,13 +317,18 @@ namespace osu.Game.Rulesets.Osu.Difficulty
 
         private double computeStaminaValue(Dictionary<string, double> categoryRatings = null)
         {
-            double staminaComboStarRating = interpComboStarRating(Attributes.StaminaComboStarRatings, accuracy, 1);
+            double staminaComboStarRating = interpComboStarRating(Attributes.StaminaComboStarRatings, scoreMaxCombo, beatmapMaxCombo);
             double staminaMissCountStarRating = interpMissCountStarRating(Attributes.StaminaComboStarRatings.Last(), Attributes.StaminaMissCounts, countMiss);
             double rawStamina = Math.Pow(staminaComboStarRating, combo_weight) * Math.Pow(staminaMissCountStarRating, 1 - combo_weight);
             double staminaValue = Math.Pow(5.0f * Math.Max(1.0f, rawStamina / 0.0675f) - 4.0f, 3.0f) / 100000.0f;
 
             // Penalize misses exponentially.
             staminaValue *= Math.Pow(0.99f, countMiss);
+
+            // Scale with acc and OD
+            double ODScale = (10.0f + Attributes.OverallDifficulty) / 20.0f;
+            double accScale = Math.Pow(accuracy, 20.0f - Attributes.OverallDifficulty);
+            staminaValue *= ODScale * accScale;
 
             if (categoryRatings != null)
             {
@@ -335,7 +341,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
 
         private double computeSpeedValue(Dictionary<string, double> categoryRatings = null)
         {
-            double speedComboStarRating = interpComboStarRating(Attributes.SpeedComboStarRatings, accuracy, 1);
+            double speedComboStarRating = interpComboStarRating(Attributes.SpeedComboStarRatings, scoreMaxCombo, beatmapMaxCombo);
             double speedMissCountStarRating = interpMissCountStarRating(Attributes.SpeedComboStarRatings.Last(), Attributes.SpeedMissCounts, countMiss);
             double rawSpeed = Math.Pow(speedComboStarRating, combo_weight) * Math.Pow(speedMissCountStarRating, 1 - combo_weight);
 
@@ -346,6 +352,11 @@ namespace osu.Game.Rulesets.Osu.Difficulty
 
             // Penalize misses exponentially.
             speedValue *= Math.Pow(0.99f, countMiss);
+
+            // Scale with acc and OD
+            double ODScale = (10.0f + Attributes.OverallDifficulty) / 20.0f;
+            double accScale = Math.Pow(accuracy, 20.0f - Attributes.OverallDifficulty);
+            speedValue *= ODScale * accScale;
 
             if (categoryRatings != null)
             {
@@ -358,7 +369,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
 
         private double computeFingerControlValue(Dictionary<string, double> categoryRatings = null)
         {
-            double fingerControlComboStarRating = interpComboStarRating(Attributes.FingerControlComboStarRatings, accuracy, 1);
+            double fingerControlComboStarRating = interpComboStarRating(Attributes.FingerControlComboStarRatings, scoreMaxCombo, beatmapMaxCombo);
             double fingerControlMissCountStarRating = interpMissCountStarRating(Attributes.FingerControlComboStarRatings.Last(), Attributes.FingerControlMissCounts, countMiss);
             double rawFingerControl = Math.Pow(fingerControlComboStarRating, combo_weight) * Math.Pow(fingerControlMissCountStarRating, 1 - combo_weight);
 
@@ -375,6 +386,11 @@ namespace osu.Game.Rulesets.Osu.Difficulty
 
             // Penalize misses exponentially.
             fingerControlValue *= Math.Pow(0.99f, countMiss);
+
+            // Scale with acc and OD
+            double ODScale = (10.0f + Attributes.OverallDifficulty) / 20.0f;
+            double accScale = Math.Pow(accuracy, 20.0f - Attributes.OverallDifficulty);
+            fingerControlValue *= ODScale * accScale;
 
             if (categoryRatings != null)
             {
