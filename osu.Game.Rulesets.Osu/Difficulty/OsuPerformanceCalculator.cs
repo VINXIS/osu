@@ -415,22 +415,28 @@ namespace osu.Game.Rulesets.Osu.Difficulty
 
             double zScore = 1.6445f;
             double sqrt2 = Math.Sqrt(2.0f);
-            double accMultiplier = 775.0f;
-            double accScale = 1.2f;
+            double accMultiplier = 10000.0f;
+            double accScale = 1.25f;
             double accThreshold = 0.99995f;
 
             double circleAccuracy = 0;
             if (countHitCircles > 0) circleAccuracy = Math.Min(accThreshold, Math.Max(0.0f, 1.0f - (1.0f - accuracy) * totalHits / countHitCircles));
 
             // Slider sigma calculations
-            double sliderConst = Math.Sqrt(2.0f / countSliders) * zScore;
-            double sliderProbability = (2.0f * accuracy + Math.Pow(sliderConst, 2.0f) - sliderConst * Math.Sqrt(4.0f * accuracy + Math.Pow(sliderConst, 2.0f) - 4.0f * Math.Pow(accuracy, 2.0f))) / (2.0f  + 2.0f * Math.Pow(sliderConst, 2.0f));
-            sigmaSlider = (199.5f - 10.0f * Attributes.OverallDifficulty) / (sqrt2 * SpecialFunctions.ErfInv(sliderProbability));
+            if (countSliders > 0)
+            {
+                double sliderConst = Math.Sqrt(2.0f / countSliders) * zScore;
+                double sliderProbability = (2.0f * accuracy + Math.Pow(sliderConst, 2.0f) - sliderConst * Math.Sqrt(4.0f * accuracy + Math.Pow(sliderConst, 2.0f) - 4.0f * Math.Pow(accuracy, 2.0f))) / (2.0f  + 2.0f * Math.Pow(sliderConst, 2.0f));
+                sigmaSlider = (199.5f - 10.0f * Attributes.OverallDifficulty) / (sqrt2 * SpecialFunctions.ErfInv(sliderProbability));
+            }
             
             // Circle sigma calculations
-            double circleConst = Math.Sqrt(2.0f / countHitCircles) * zScore;
-            double circleProbability = (2.0f * circleAccuracy + Math.Pow(circleConst, 2.0f) - circleConst * Math.Sqrt(4.0f * circleAccuracy + Math.Pow(circleConst, 2.0f) - 4.0f * Math.Pow(circleAccuracy, 2.0f))) / (2.0f  + 2.0f * Math.Pow(circleConst, 2.0f));
-            sigmaCircle = (79.5f - 6.0f * Attributes.OverallDifficulty) / (sqrt2 * SpecialFunctions.ErfInv(circleProbability));
+            if (countHitCircles > 0)
+            {
+                double circleConst = Math.Sqrt(2.0f / countHitCircles) * zScore;
+                double circleProbability = (2.0f * circleAccuracy + Math.Pow(circleConst, 2.0f) - circleConst * Math.Sqrt(4.0f * circleAccuracy + Math.Pow(circleConst, 2.0f) - 4.0f * Math.Pow(circleAccuracy, 2.0f))) / (2.0f  + 2.0f * Math.Pow(circleConst, 2.0f));
+                sigmaCircle = (79.5f - 6.0f * Attributes.OverallDifficulty) / (sqrt2 * SpecialFunctions.ErfInv(circleProbability));
+            }
 
             if (sigmaSlider == 0) return accMultiplier * Math.Pow(accScale, -sigmaCircle);
             if (sigmaCircle == 0) return accMultiplier * Math.Pow(accScale, -sigmaSlider);
