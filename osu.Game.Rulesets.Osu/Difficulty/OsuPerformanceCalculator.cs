@@ -32,7 +32,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
         private int countMeh;
         private int countMiss;
         private const double combo_weight = 0.5;
-        private const double aim_pp_factor = 1.5f;
+        private const double aim_pp_factor = 1.25f;
         private const double speed_pp_factor = 2.5f;
         private const double total_factor = 1.1f;
 
@@ -413,14 +413,13 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             double sigmaSlider = 0;
             double sigmaTotal = 0;
 
-            double zScore = 1.6445f;
+            double zScore = 2.58f;
             double sqrt2 = Math.Sqrt(2.0f);
-            double accMultiplier = 10000.0f;
+            double accMultiplier = 800.0f;
             double accScale = 1.25f;
-            double accThreshold = 0.99995f;
 
             double circleAccuracy = 0;
-            if (countHitCircles > 0) circleAccuracy = Math.Min(accThreshold, Math.Max(0.0f, 1.0f - (1.0f - accuracy) * totalHits / countHitCircles));
+            if (countHitCircles > 0) circleAccuracy = Math.Max(0.0f, 1.0f - (1.0f - accuracy) * totalHits / countHitCircles);
 
             // Slider sigma calculations
             if (countSliders > 0)
