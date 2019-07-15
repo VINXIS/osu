@@ -16,7 +16,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
         private double StrainDecay = 1.0;
         protected override double SkillMultiplier => 3.875;
         protected override double StrainDecayBase => StrainDecay;
-        protected override double StarMultiplierPerRepeat => 1.03;
+        protected override double StarMultiplierPerRepeat => 1.02;
 
         protected override double StrainValueOf(DifficultyHitObject current)
         {

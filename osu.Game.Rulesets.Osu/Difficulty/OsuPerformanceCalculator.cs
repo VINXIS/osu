@@ -32,7 +32,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
         private int countMeh;
         private int countMiss;
         private const double combo_weight = 0.5;
-        private const double aim_pp_factor = 1.25f;
+        private const double aim_pp_factor = 1.1f;
         private const double speed_pp_factor = 2.5f;
         private const double total_factor = 1.1f;
 
@@ -331,11 +331,6 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             // Penalize misses exponentially.
             staminaValue *= Math.Pow(0.99f, countMiss);
 
-            // Scale with acc and OD
-            double ODScale = (10.0f + Attributes.OverallDifficulty) / 20.0f;
-            double accScale = Math.Pow(accuracy, 20.0f - Attributes.OverallDifficulty);
-            staminaValue *= ODScale * accScale;
-
             if (categoryRatings != null)
             {
                 categoryRatings.Add("Stamina Combo Stars", staminaComboStarRating);
@@ -358,11 +353,6 @@ namespace osu.Game.Rulesets.Osu.Difficulty
 
             // Penalize misses exponentially.
             speedValue *= Math.Pow(0.99f, countMiss);
-
-            // Scale with acc and OD
-            double ODScale = (10.0f + Attributes.OverallDifficulty) / 20.0f;
-            double accScale = Math.Pow(accuracy, 20.0f - Attributes.OverallDifficulty);
-            speedValue *= ODScale * accScale;
 
             if (categoryRatings != null)
             {
@@ -393,11 +383,6 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             // Penalize misses exponentially.
             fingerControlValue *= Math.Pow(0.99f, countMiss);
 
-            // Scale with acc and OD
-            double ODScale = (10.0f + Attributes.OverallDifficulty) / 20.0f;
-            double accScale = Math.Pow(accuracy, 20.0f - Attributes.OverallDifficulty);
-            fingerControlValue *= ODScale * accScale;
-
             if (categoryRatings != null)
             {
                 categoryRatings.Add("Finger Control Combo Stars", fingerControlComboStarRating);
@@ -415,8 +400,8 @@ namespace osu.Game.Rulesets.Osu.Difficulty
 
             double zScore = 2.58f;
             double sqrt2 = Math.Sqrt(2.0f);
-            double accMultiplier = 800.0f;
-            double accScale = 1.25f;
+            double accMultiplier = 1200.0f;
+            double accScale = 1.3f;
 
             double circleAccuracy = 0;
             if (countHitCircles > 0) circleAccuracy = Math.Max(0.0f, 1.0f - (1.0f - accuracy) * totalHits / countHitCircles);

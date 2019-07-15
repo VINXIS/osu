@@ -106,10 +106,10 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             "\nSpeed: " + Math.Round(speedRating, 2) + 
             "\nAim Control: " + Math.Round(aimControlRating, 2) + 
             "\nFinger Control: " + Math.Round(fingerControlRating, 2) +
-            "\nAccuracy: " + Math.Round(StarTransformation(accuracyRating), 2) +
             "\n---" +
             "\nAim SR: " + Math.Round(StarTransformation(totalAimRating), 2) +
             "\nSpeed SR: " + Math.Round(StarTransformation(totalSpeedRating), 2) +
+            "\nAccuracy: " + Math.Round(StarTransformation(accuracyRating), 2) +
             "\nSR: " + Math.Round(starRating, 2);
 
             using (StreamWriter outputFile = new StreamWriter(beatmap.BeatmapInfo.OnlineBeatmapID + "values.txt"))
@@ -148,7 +148,9 @@ namespace osu.Game.Rulesets.Osu.Difficulty
 
                 FingerControlStrain = fingerControlRating,
                 FingerControlComboStarRatings = fingerControlComboSr,
-                FingerControlMissCounts = fingerControlMissCounts
+                FingerControlMissCounts = fingerControlMissCounts,
+
+                AccuracyStrain = StarTransformation(accuracyRating),
             };
         }
 

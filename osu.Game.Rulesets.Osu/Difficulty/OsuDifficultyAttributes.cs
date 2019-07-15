@@ -37,6 +37,8 @@ namespace osu.Game.Rulesets.Osu.Difficulty
         public IList<double> FingerControlComboStarRatings;
         public IList<double> FingerControlMissCounts;
 
+        public double AccuracyStrain;
+
         public double ApproachRate;
         public double OverallDifficulty;
         public int MaxCombo;
