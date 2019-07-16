@@ -46,7 +46,6 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
             {
                 var osuPrevious = (OsuDifficultyHitObject)Previous[0];
                 double distScale = 1.0;
-                double angleScale = 0.5 + Math.Pow(Math.Sin(osuCurrent.Angle.Value / 2.0), 2.0);
                 double jumpAwk = 0;
 
                 double currDistance = Math.Min(applyDiminishingExp(osuCurrent.JumpDistance + osuCurrent.TravelDistance), 250);
@@ -60,7 +59,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                 jumpAwk = diffDist / maxDist;
 
                 test.Add(Tuple.Create(current.BaseObject.StartTime, maxDist));
-                strain = jumpAwk * distScale * angleScale / Math.Max(osuCurrent.StrainTime, osuPrevious.StrainTime);
+                strain = jumpAwk * distScale / Math.Max(osuCurrent.StrainTime, osuPrevious.StrainTime);
             }
             return strain * sliderVel;
         }
