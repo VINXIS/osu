@@ -15,7 +15,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
     public class AimControl : OsuSkill
     {
         private double StrainDecay = 0.45;
-        protected override double SkillMultiplier => 10000;
+        protected override double SkillMultiplier => 15000;
         protected override double StrainDecayBase => StrainDecay;
         protected override double StarMultiplierPerRepeat => 1.04;
 
@@ -41,26 +41,41 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
 
             double strain = 0;
             double sliderVel = 1.0 + Math.Min(1.0, osuCurrent.TravelDistance / osuCurrent.TravelTime);
+            double currVel = osuCurrent.JumpDistance / osuCurrent.StrainTime;
 
-            if (Previous.Count > 1)
+            if (Previous.Count > 0)
             {
                 var osuPrevious = (OsuDifficultyHitObject)Previous[0];
-                var osuPrevPrevious = (OsuDifficultyHitObject)Previous[1];
-                double distScale = 1.0;
-                double jumpAwk = 0;
+                double prevVel = osuPrevious.JumpDistance / osuPrevious.StrainTime;
 
-                double currDistance = applyDiminishingExp(osuCurrent.JumpDistance + osuCurrent.TravelDistance);
-                double prevDistance = applyDiminishingExp(osuPrevious.JumpDistance + osuPrevious.TravelDistance);
-                
-                double diffDist = Math.Abs(currDistance - prevDistance);
-                double maxDist = Math.Max(Math.Max(currDistance, prevDistance), valThresh);
-                double minDist = Math.Max(Math.Min(currDistance, prevDistance), valThresh);
-                
-                if (minDist < 150) distScale = applySinTransformation(minDist / 150);
-                jumpAwk = diffDist / maxDist;
+                if (osuCurrent.Angle != null && osuPrevious.Angle != null)
+                {
+                    double currTrueVel = currVel * Math.Sin(osuCurrent.Angle.Value / 2.0);
+                    double prevTrueVel = prevVel * Math.Sin(osuPrevious.Angle.Value / 2.0);
+                    double trueVelDiff = currTrueVel - prevTrueVel;
+                    
+                    double arcLength = 0;
 
-                test.Add(Tuple.Create(current.BaseObject.StartTime, jumpAwk));
-                strain = distScale * jumpAwk / Math.Max(osuCurrent.StrainTime, osuPrevious.StrainTime);
+                    double distanceComparison = osuCurrent.JumpDistance - prevTrueVel * osuCurrent.StrainTime;
+
+                    double constant1 = 6.0 * (trueVelDiff * osuCurrent.StrainTime / 2.0 - distanceComparison) / Math.Pow(osuCurrent.StrainTime, 3.0);
+                    double constant2 = 6.0 * (-trueVelDiff * Math.Pow(osuCurrent.StrainTime, 2.0) / 3.0 + distanceComparison * osuCurrent.StrainTime) / Math.Pow(osuCurrent.StrainTime, 3.0);
+                    double constantRatio = -constant2 / (2.0 * constant1);
+
+                    double timeFunction = constant1 * Math.Pow(constantRatio, 2.0) + constant2 * constantRatio + prevTrueVel;
+                    double chordLength = Math.Sqrt(Math.Pow(osuCurrent.StrainTime, 2.0) + Math.Pow(trueVelDiff, 2.0));
+                    double chordDistance = Math.Abs(trueVelDiff * constantRatio - osuCurrent.StrainTime * (timeFunction - prevTrueVel)) / chordLength;
+                    
+                    if (constant1 != 0)
+                    {
+                        double pythagorean = Math.Sqrt(Math.Pow(chordLength, 2.0) + 16.0 * Math.Pow(chordDistance, 2.0));
+                        arcLength = pythagorean / 2.0 + Math.Pow(chordLength, 2.0) * Math.Log(4.0 + pythagorean / chordDistance) / (8.0 * chordDistance);
+                    } else 
+                        arcLength = chordLength;
+
+                    test.Add(Tuple.Create(current.BaseObject.StartTime, Math.Log(arcLength / osuCurrent.StrainTime)));
+                    strain = trueVelDiff * arcLength / osuCurrent.StrainTime;
+                }
             }
             return strain * sliderVel;
         }
@@ -72,7 +87,5 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
         => curr.DistanceVector.X * prev.DistanceVector.Y - curr.DistanceVector.Y * prev.DistanceVector.X;
 
         private double applyDiminishingExp(double val) => Math.Max(val - radius, 0.0);
-
-        private double applySinTransformation(double val) => Math.Pow(Math.Sin(pi_over_2 * val), 2.0);
     }
 }

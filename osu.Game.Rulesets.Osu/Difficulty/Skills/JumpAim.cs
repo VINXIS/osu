@@ -41,13 +41,13 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
 
             double strain = 0;
             if (osuCurrent.JumpDistance > 90)
-                strain = applyDiminishingExp(osuCurrent.DistanceVector).Length / osuCurrent.StrainTime;
+                strain = (applyDiminishingExp(osuCurrent.DistanceVector).Length + osuCurrent.TravelDistance) / osuCurrent.StrainTime;
 
             if (Previous.Count > 0)
             {
                 var osuPrevious = (OsuDifficultyHitObject)Previous[0];
-                if (osuCurrent.JumpDistance > 90 && osuPrevious.JumpDistance > 90)
-                    strain = (applyDiminishingExp(osuCurrent.DistanceVector) + 0.5f * applyDiminishingExp(osuPrevious.DistanceVector)).Length / Math.Max(osuCurrent.StrainTime, osuPrevious.StrainTime);
+                if (osuCurrent.JumpDistance >= 90 && osuPrevious.JumpDistance >= 90)
+                    strain = ((applyDiminishingExp(osuCurrent.DistanceVector) + 0.5f * applyDiminishingExp(osuPrevious.DistanceVector)).Length + osuCurrent.TravelDistance) / Math.Max(osuCurrent.StrainTime, osuPrevious.StrainTime);
             }
 
             return strain;
