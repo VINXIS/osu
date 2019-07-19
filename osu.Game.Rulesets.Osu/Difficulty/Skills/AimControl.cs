@@ -14,19 +14,19 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
     /// </summary>
     public class AimControl : OsuSkill
     {
-        private double StrainDecay = 0.45;
-        protected override double SkillMultiplier => 19000;
+        private double StrainDecay = 0.4;
+        protected override double SkillMultiplier => 32000;
         protected override double StrainDecayBase => StrainDecay;
         protected override double StarMultiplierPerRepeat => 1.04;
 
         private const double pi_over_2 = Math.PI / 2.0;
         private const double pi_over_4 = Math.PI / 4.0;
-        private const double valThresh = 0.1;
+        private const double valThresh = 0.5;
         private double radius;
 
         protected override double StrainValueOf(DifficultyHitObject current)
         {
-            StrainDecay = 0.45;
+            StrainDecay = 0.4;
 
             if (current.BaseObject is Spinner)
                 return 0;
@@ -42,33 +42,37 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
             double strain = 0;
             double sliderVel = 1.0 + Math.Min(1.0, osuCurrent.TravelDistance / osuCurrent.TravelTime);
 
-            if (Previous.Count > 0 && osuCurrent.Angle != null)
+            if (Previous.Count > 0)
             {
                 var osuPrevious = (OsuDifficultyHitObject)Previous[0];
-                double distScale = 1.0;
                 double jumpAwk = 0;
+                double distScale = 1.0;
+                double angleScale = 0;
+                double strainScale = 0;
 
-                double currDistance = Math.Min(applyDiminishingExp(osuCurrent.JumpDistance + osuCurrent.TravelDistance), 250);
-                double prevDistance = Math.Min(applyDiminishingExp(osuPrevious.JumpDistance + osuPrevious.TravelDistance), 250);
-                
-                double diffDist = Math.Abs(currDistance - prevDistance);
-                double maxDist = Math.Max(Math.Max(currDistance, prevDistance), valThresh);
-                double minDist = Math.Max(Math.Min(currDistance, prevDistance), valThresh);
-                
-                if (minDist < 150) distScale = Math.Pow(Math.Sin(pi_over_2 * minDist / 150), 2.0);
-                jumpAwk = diffDist / maxDist;
+                double minTime = Math.Min(osuCurrent.StrainTime, osuPrevious.StrainTime);
+                double maxTime = Math.Max(osuCurrent.StrainTime, osuPrevious.StrainTime);
 
-                test.Add(Tuple.Create(current.BaseObject.StartTime, maxDist));
-                strain = jumpAwk * distScale / Math.Max(osuCurrent.StrainTime, osuPrevious.StrainTime);
+                if (osuCurrent.Angle != null && osuPrevious.Angle != null)
+                {
+                    double currDistance = applyDiminishingExp(osuCurrent.JumpDistance + osuCurrent.TravelDistance);
+                    double prevDistance = applyDiminishingExp(osuPrevious.JumpDistance + osuPrevious.TravelDistance);
+                    
+                    double diffDist = Math.Abs(currDistance - prevDistance);
+                    double maxDist = Math.Max(Math.Max(currDistance, prevDistance), valThresh);
+                    double minDist = Math.Max(Math.Min(currDistance, prevDistance), valThresh);
+                    jumpAwk = diffDist / maxDist;
+                    
+                    if (minDist < 150) distScale = Math.Pow(Math.Sin(pi_over_2 * minDist / 150), 2.0);
+                    angleScale = Math.Pow(Math.Sin(osuCurrent.Angle.Value / 2.0), 2.0);
+                    strainScale = minTime / maxTime;
+                }
+
+                test.Add(Tuple.Create(current.BaseObject.StartTime, distScale));
+                strain = jumpAwk * distScale * angleScale * strainScale / maxTime;
             }
             return strain * sliderVel;
         }
-
-        private Vector2 Projection(OsuDifficultyHitObject curr, OsuDifficultyHitObject prev)	
-        => Vector2.Multiply(prev.DistanceVector.Normalized(), Vector2.Dot(curr.DistanceVector, prev.DistanceVector.Normalized()));
-
-        private double Det(OsuDifficultyHitObject curr, OsuDifficultyHitObject prev)
-        => curr.DistanceVector.X * prev.DistanceVector.Y - curr.DistanceVector.Y * prev.DistanceVector.X;
 
         private double applyDiminishingExp(double val) => Math.Max(val - radius, 0.0);
     }
