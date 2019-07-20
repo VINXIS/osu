@@ -40,19 +40,19 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
             if (radius == 0) radius = ((OsuHitObject)osuCurrent.BaseObject).Radius;
 
             double strain = 0;
-            if (osuCurrent.JumpDistance > 90)
-                strain = (applyDiminishingExp(osuCurrent.DistanceVector).Length + osuCurrent.TravelDistance) / osuCurrent.StrainTime;
+            if (osuCurrent.JumpDistance >= 90)
+                strain = (applyDiminishingDist(osuCurrent.DistanceVector).Length + osuCurrent.TravelDistance) / osuCurrent.StrainTime;
 
             if (Previous.Count > 0)
             {
                 var osuPrevious = (OsuDifficultyHitObject)Previous[0];
                 if (osuCurrent.JumpDistance >= 90 && osuPrevious.JumpDistance >= 90)
-                    strain = ((applyDiminishingExp(osuCurrent.DistanceVector) + 0.5f * applyDiminishingExp(osuPrevious.DistanceVector)).Length + osuCurrent.TravelDistance) / Math.Max(osuCurrent.StrainTime, osuPrevious.StrainTime);
+                    strain = ((applyDiminishingDist(osuCurrent.DistanceVector) + 0.5f * applyDiminishingDist(osuPrevious.DistanceVector)).Length + osuCurrent.TravelDistance) / Math.Max(osuCurrent.StrainTime, osuPrevious.StrainTime);
             }
 
             return strain;
         }
 
-        private Vector2 applyDiminishingExp(Vector2 val) => val - 90.0f * val.Normalized();
+        private Vector2 applyDiminishingDist(Vector2 val) => val - 90.0f * val.Normalized();
     }
 }

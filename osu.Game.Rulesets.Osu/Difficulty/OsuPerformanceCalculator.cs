@@ -34,7 +34,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
         private const double combo_weight = 0.5;
         private const double aim_pp_factor = 1.1f;
         private const double speed_pp_factor = 2.5f;
-        private const double total_factor = 1.1f;
+        private const double total_factor = 1.25f;
 
         public OsuPerformanceCalculator(Ruleset ruleset, WorkingBeatmap beatmap, ScoreInfo score)
             : base(ruleset, beatmap, score)
@@ -400,8 +400,8 @@ namespace osu.Game.Rulesets.Osu.Difficulty
 
             double zScore = 2.58f;
             double sqrt2 = Math.Sqrt(2.0f);
-            double accMultiplier = 1200.0f;
-            double accScale = 1.3f;
+            double accMultiplier = 800.0f;
+            double accScale = 1.25f;
 
             double circleAccuracy = 0;
             if (countHitCircles > 0) circleAccuracy = Math.Max(0.0f, 1.0f - (1.0f - accuracy) * totalHits / countHitCircles);
