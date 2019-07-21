@@ -29,10 +29,9 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
             var osuCurrent = (OsuDifficultyHitObject)current;
             StrainDecay = Math.Pow(8.0 / 9.0, 1000.0 / Math.Min(osuCurrent.StrainTime, 100.0));
             double strain = Math.Pow(100.0 / osuCurrent.StrainTime, 0.45);
-            double repeatVal = 0;
-
             if (osuCurrent.BaseObject is Slider) strain /= 4;
 
+            double repeatVal = 0;
             if (Previous.Count > 0)
             {
                 var osuPrevious = (OsuDifficultyHitObject)Previous[0];

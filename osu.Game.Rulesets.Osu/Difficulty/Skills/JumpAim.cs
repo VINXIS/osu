@@ -15,12 +15,11 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
     public class JumpAim : OsuSkill
     {
         private double StrainDecay = 0.15;
-        private const double angle_bonus_begin = Math.PI / 3.0;
-        private const double angle_bonus_end = 5.0 * Math.PI / 6.0;
 
-        private const double pi_over_2 = Math.PI / 2.0;
+        private const double angle_thresh = Math.PI / 4.0;
+        private const float prevMultiplier = 0.4f;
 
-        protected override double SkillMultiplier => 35;
+        protected override double SkillMultiplier => 40;
         protected override double StrainDecayBase => StrainDecay;
         protected override double StarMultiplierPerRepeat => 1.04;
 
@@ -43,11 +42,29 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
             if (osuCurrent.JumpDistance >= 90)
                 strain = (applyDiminishingDist(osuCurrent.DistanceVector).Length + osuCurrent.TravelDistance) / osuCurrent.StrainTime;
 
-            if (Previous.Count > 0)
+            if (Previous.Count > 0 && osuCurrent.Angle != null)
             {
                 var osuPrevious = (OsuDifficultyHitObject)Previous[0];
                 if (osuCurrent.JumpDistance >= 90 && osuPrevious.JumpDistance >= 90)
-                    strain = ((applyDiminishingDist(osuCurrent.DistanceVector) + 0.5f * applyDiminishingDist(osuPrevious.DistanceVector)).Length + osuCurrent.TravelDistance) / Math.Max(osuCurrent.StrainTime, osuPrevious.StrainTime);
+                {
+                    if (osuCurrent.Angle.Value <= angle_thresh)
+                        strain = Math.Abs((applyDiminishingDist(osuCurrent.DistanceVector).Length - prevMultiplier * applyDiminishingDist(osuPrevious.DistanceVector).Length) + osuCurrent.TravelDistance) / Math.Max(osuCurrent.StrainTime, osuPrevious.StrainTime);
+                    else
+                    {
+                        Vector2 Prev1 = new Vector2(
+                            osuPrevious.DistanceVector.X * (float)Math.Cos(angle_thresh) - osuPrevious.DistanceVector.Y * (float)Math.Sin(angle_thresh),
+                            osuPrevious.DistanceVector.X * (float)Math.Sin(angle_thresh) + osuPrevious.DistanceVector.Y * (float)Math.Cos(angle_thresh)
+                        );
+                        Vector2 Prev2 = new Vector2(
+                            osuPrevious.DistanceVector.X * (float)Math.Cos(-angle_thresh) - osuPrevious.DistanceVector.Y * (float)Math.Sin(-angle_thresh),
+                            osuPrevious.DistanceVector.X * (float)Math.Sin(-angle_thresh) + osuPrevious.DistanceVector.Y * (float)Math.Cos(-angle_thresh)
+                        );
+                        double strain1 = (applyDiminishingDist(osuCurrent.DistanceVector) + prevMultiplier * applyDiminishingDist(Prev1)).Length;
+                        double strain2 = (applyDiminishingDist(osuCurrent.DistanceVector) + prevMultiplier * applyDiminishingDist(Prev2)).Length;
+
+                        strain = (Math.Min(strain1, strain2) + osuCurrent.TravelDistance) / Math.Max(osuCurrent.StrainTime, osuPrevious.StrainTime);
+                    }
+                }
             }
 
             return strain;

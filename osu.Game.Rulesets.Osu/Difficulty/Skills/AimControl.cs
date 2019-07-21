@@ -15,7 +15,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
     public class AimControl : OsuSkill
     {
         private double StrainDecay = 0.25;
-        protected override double SkillMultiplier => 30000;
+        protected override double SkillMultiplier => 40000;
         protected override double StrainDecayBase => StrainDecay;
         protected override double StarMultiplierPerRepeat => 1.04;
 
@@ -39,6 +39,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
             test.Add(Tuple.Create(current.BaseObject.StartTime, 0.0));
 
             double strain = 0;
+            double currVel = Math.Min(1.0, osuCurrent.JumpDistance / osuCurrent.StrainTime);
             double sliderVel = 1.0 + Math.Min(1.0, osuCurrent.TravelDistance / osuCurrent.TravelTime);
 
             if (Previous.Count > 0)
@@ -47,9 +48,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                 double jumpAwk = 0;
                 double distScale = 1.0;
                 double angleScale = 0.25;
-                double strainScale = 0;
 
-                double minTime = Math.Min(osuCurrent.StrainTime, osuPrevious.StrainTime);
                 double maxTime = Math.Max(osuCurrent.StrainTime, osuPrevious.StrainTime);
 
                 if (osuCurrent.Angle != null)
@@ -66,14 +65,13 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
 
                     jumpAwk = diffVel / maxVel;
                     if (minDist < 150) distScale = Math.Pow(Math.Sin(pi_over_2 * minDist / 150), 2.0);
-                    angleScale += 3.0 * Math.Pow(Math.Sin(osuCurrent.Angle.Value / 2.0), 2.0) / 4.0;
-                    strainScale = minTime / maxTime;
+                    if (osuCurrent.Angle.Value >= pi_over_2) angleScale += Math.Pow(Math.Sin(osuCurrent.Angle.Value - pi_over_2), 2.0);
                 }
 
                 test.Add(Tuple.Create(current.BaseObject.StartTime, jumpAwk));
-                strain = jumpAwk * distScale * angleScale * strainScale / maxTime;
+                strain = jumpAwk * distScale * angleScale / maxTime;
             }
-            return strain * sliderVel;
+            return strain * currVel * sliderVel;
         }
 
         private double applyDiminishingExp(double val) => Math.Max(val - radius, 0.0);

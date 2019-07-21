@@ -33,8 +33,8 @@ namespace osu.Game.Rulesets.Osu.Difficulty
         private int countMiss;
         private const double combo_weight = 0.5;
         private const double aim_pp_factor = 1.1f;
-        private const double speed_pp_factor = 2.5f;
-        private const double total_factor = 1.25f;
+        private const double speed_pp_factor = 1.1f;
+        private const double total_factor = 2.2f;
 
         public OsuPerformanceCalculator(Ruleset ruleset, WorkingBeatmap beatmap, ScoreInfo score)
             : base(ruleset, beatmap, score)
@@ -217,10 +217,10 @@ namespace osu.Game.Rulesets.Osu.Difficulty
                         (totalHits > 500 ? (totalHits - 500) / 1200.0f : 0.0f) : 0.0f);
             }
 
-            // Scale the jumpaim value with accuracy
-            jumpAimValue *= 0.75f + accuracy / 4.0f;
-            // It is important to also consider accuracy difficulty when doing that
-            jumpAimValue *= 0.98f + Math.Pow(Attributes.OverallDifficulty, 2) / 2500;
+            // Scale the jump aim value with accuracy
+            double accScale = 0.75f + accuracy / 4.0f;
+            double ODScale = 0.98f + Math.Pow(Attributes.OverallDifficulty, 2) / 2500;
+            jumpAimValue *= accScale * ODScale;
 
             if (categoryRatings != null)
             {
@@ -262,10 +262,10 @@ namespace osu.Game.Rulesets.Osu.Difficulty
                         (totalHits > 500 ? (totalHits - 500) / 1200.0f : 0.0f) : 0.0f)) / 2.0f;
             }
 
-            // Scale the streamaim value with accuracy
-            streamAimValue *= 0.75f + accuracy / 4.0f;
-            // It is important to also consider accuracy difficulty when doing that
-            streamAimValue *= 0.98f + Math.Pow(Attributes.OverallDifficulty, 2) / 2500;
+            // Scale the stream aim value with accuracy
+            double accScale = 0.75f + accuracy / 4.0f;
+            double ODScale = 0.98f + Math.Pow(Attributes.OverallDifficulty, 2) / 2500;
+            streamAimValue *= accScale * ODScale;
 
             if (categoryRatings != null)
             {
@@ -307,10 +307,10 @@ namespace osu.Game.Rulesets.Osu.Difficulty
                         (totalHits > 500 ? (totalHits - 500) / 1200.0f : 0.0f) : 0.0f);
             }
 
-            // Scale the sim control value with accuracy
-            aimControlValue *= 0.75f + accuracy / 4.0f;
-            // It is important to also consider accuracy difficulty when doing that
-            aimControlValue *= 0.98f + Math.Pow(Attributes.OverallDifficulty, 2) / 2500;
+            // Scale the control aim value with accuracy
+            double accScale = 0.75f + accuracy / 4.0f;
+            double ODScale = 0.98f + Math.Pow(Attributes.OverallDifficulty, 2) / 2500;
+            aimControlValue *= accScale * ODScale;
 
             if (categoryRatings != null)
             {
@@ -330,6 +330,11 @@ namespace osu.Game.Rulesets.Osu.Difficulty
 
             // Penalize misses exponentially.
             staminaValue *= Math.Pow(0.99f, countMiss);
+
+            // Scale the stamina value with accuracy
+            double accScale = 0.5f * Math.Pow(accuracy, 10.0f);
+            double ODScale = 0.41f + Math.Pow(Attributes.OverallDifficulty, 2) / 100;
+            staminaValue *= 0.5f + accScale * ODScale;
 
             if (categoryRatings != null)
             {
@@ -353,6 +358,11 @@ namespace osu.Game.Rulesets.Osu.Difficulty
 
             // Penalize misses exponentially.
             speedValue *= Math.Pow(0.99f, countMiss);
+
+            // Scale the speed value with accuracy
+            double accScale = 0.5f * Math.Pow(accuracy, 10.0f);
+            double ODScale = 0.41f + Math.Pow(Attributes.OverallDifficulty, 2) / 100;
+            speedValue *= 0.5f + accScale * ODScale;
 
             if (categoryRatings != null)
             {
@@ -382,6 +392,11 @@ namespace osu.Game.Rulesets.Osu.Difficulty
 
             // Penalize misses exponentially.
             fingerControlValue *= Math.Pow(0.99f, countMiss);
+
+            // Scale the finger control value with accuracy
+            double accScale = 0.5f * Math.Pow(accuracy, 10.0f);
+            double ODScale = 0.41f + Math.Pow(Attributes.OverallDifficulty, 2) / 100;
+            fingerControlValue *= 0.5f + accScale * ODScale;
 
             if (categoryRatings != null)
             {

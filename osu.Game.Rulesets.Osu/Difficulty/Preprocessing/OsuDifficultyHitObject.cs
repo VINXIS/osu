@@ -134,6 +134,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Preprocessing
                     dist -= approxFollowCircleRadius;
                     slider.LazyEndPosition += diff * dist;
                     slider.LazyTravelDistance += dist;
+                    slider.LazyTravelTime = t - slider.StartTime;
                 }
                 if (t != slider.TailCircle.StartTime)
                     slider.LazyTravelTime = t - slider.StartTime;

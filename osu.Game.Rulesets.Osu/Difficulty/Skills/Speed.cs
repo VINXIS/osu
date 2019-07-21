@@ -30,7 +30,10 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
 
             StrainDecay = Math.Pow(5.0 / 6.0, 1000.0 / Math.Min(strainTime, 200.0));
 
-            return Math.Pow(quarter220 / strainTime, 2.0);
+            double strain = Math.Pow(quarter220 / strainTime, 2.0);
+            if (osuCurrent.BaseObject is Slider) strain /= 4;
+
+            return strain;
         }
     }
 }
