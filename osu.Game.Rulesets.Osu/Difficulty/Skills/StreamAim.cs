@@ -18,9 +18,9 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
         private const double angle_bonus_end = Math.PI / 3.0;
         private const double pi_over_2 = Math.PI / 2.0;
 
-        protected override double SkillMultiplier => 2250;
+        protected override double SkillMultiplier => 2300;
         protected override double StrainDecayBase => StrainDecay;
-        protected override double StarMultiplierPerRepeat => 1.04;
+        protected override double StarMultiplierPerRepeat => 1.07;
 
         protected override double StrainValueOf(DifficultyHitObject current)
         {
@@ -68,7 +68,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                 else
                     prevStrain = 1.0;
 
-                double strainDiff = 2.5 * Math.Sin(pi_over_2 * Math.Abs(strain - prevStrain));
+                double strainDiff = 3.0 * Math.Pow(Math.Sin(pi_over_2 * Math.Abs(strain - prevStrain)), 2.0);
 
                 total2 = strainDiff * strain / Math.Max(osuCurrent.StrainTime, osuPrevious.StrainTime);
             }

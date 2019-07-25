@@ -15,12 +15,14 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
     public class AimControl : OsuSkill
     {
         private double StrainDecay = 0.25;
-        protected override double SkillMultiplier => 40000;
+        protected override double SkillMultiplier => 50000;
         protected override double StrainDecayBase => StrainDecay;
-        protected override double StarMultiplierPerRepeat => 1.04;
+        protected override double StarMultiplierPerRepeat => 1.1;
 
         private const double pi_over_2 = Math.PI / 2.0;
-        private const double valThresh = 1.0;
+        private const double pi_over_4 = Math.PI / 4.0;
+        private const double angle_stretch = 2.0 / 3.0;
+        private const double valThresh = 0.25;
         private double radius;
 
         protected override double StrainValueOf(DifficultyHitObject current)
@@ -39,7 +41,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
             test.Add(Tuple.Create(current.BaseObject.StartTime, 0.0));
 
             double strain = 0;
-            double currVel = Math.Min(1.0, osuCurrent.JumpDistance / osuCurrent.StrainTime);
+            double currVel = 0;
             double sliderVel = 1.0 + Math.Min(1.0, osuCurrent.TravelDistance / osuCurrent.TravelTime);
 
             if (Previous.Count > 0)
@@ -47,7 +49,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                 var osuPrevious = (OsuDifficultyHitObject)Previous[0];
                 double jumpAwk = 0;
                 double distScale = 1.0;
-                double angleScale = 0.25;
+                double angleScale = 0;
 
                 double maxTime = Math.Max(osuCurrent.StrainTime, osuPrevious.StrainTime);
 
@@ -58,14 +60,16 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                     
                     double diffDist = Math.Abs(currDistance - prevDistance);
                     double maxDist = Math.Max(Math.Max(currDistance, prevDistance), valThresh);
-                    double minDist = Math.Max(Math.Min(currDistance, prevDistance), valThresh);
+                    double minDist = Math.Min(currDistance, prevDistance);
+
+                    currVel = Math.Min(1.0, currDistance / maxTime);
 
                     double diffVel = Math.Abs(currDistance / osuCurrent.StrainTime - prevDistance / osuPrevious.StrainTime);
                     double maxVel = Math.Max(Math.Max(currDistance / osuCurrent.StrainTime, prevDistance / osuPrevious.StrainTime), valThresh);
 
-                    jumpAwk = diffVel / maxVel;
-                    if (minDist < 150) distScale = Math.Pow(Math.Sin(pi_over_2 * minDist / 150), 2.0);
-                    if (osuCurrent.Angle.Value >= pi_over_2) angleScale += Math.Pow(Math.Sin(osuCurrent.Angle.Value - pi_over_2), 2.0);
+                    jumpAwk = Math.Pow(Math.Sin(pi_over_2 * diffVel / maxVel), 2.0);
+                    if (minDist < 125) distScale = Math.Pow(Math.Sin(pi_over_2 * minDist / 125), 2.0);
+                    angleScale = Math.Pow(Math.Sin(angle_stretch * (osuCurrent.Angle.Value - pi_over_4)), 2.0);
                 }
 
                 test.Add(Tuple.Create(current.BaseObject.StartTime, jumpAwk));

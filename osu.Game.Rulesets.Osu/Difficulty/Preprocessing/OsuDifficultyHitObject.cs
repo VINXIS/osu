@@ -73,7 +73,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Preprocessing
             float scalingFactor = normalized_radius / (float)BaseObject.Radius;
             if (BaseObject.Radius < 30)
             {
-                float smallCircleBonus = Math.Min(30 - (float)BaseObject.Radius, 5) / 50;
+                float smallCircleBonus = (30 - (float)BaseObject.Radius) / 50;
                 scalingFactor *= 1 + smallCircleBonus;
             }
 

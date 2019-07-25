@@ -21,9 +21,9 @@ namespace osu.Game.Rulesets.Osu.Difficulty
     public class OsuDifficultyCalculator : DifficultyCalculator
     {
         private const double difficulty_multiplier = 0.0675;
-        private const double star_rating_scale_factor = 3.0;
+        private const double star_rating_scale_factor = 1.485 * 3.0;
         private const double aim_star_factor = 1.1;
-        private const double speed_star_factor = 1.1;
+        private const double speed_star_factor = 2.2;
         private const double total_star_factor = 2.2;
 
         public OsuDifficultyCalculator(Ruleset ruleset, WorkingBeatmap beatmap)
@@ -105,12 +105,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             "\nStamina: " + Math.Round(staminaRating, 2) + 
             "\nSpeed: " + Math.Round(speedRating, 2) + 
             "\nAim Control: " + Math.Round(aimControlRating, 2) + 
-            "\nFinger Control: " + Math.Round(fingerControlRating, 2) +
-            "\n---" +
-            "\nAim SR: " + Math.Round(StarTransformation(totalAimRating), 2) +
-            "\nSpeed SR: " + Math.Round(StarTransformation(totalSpeedRating), 2) +
-            "\nAccuracy: " + Math.Round(StarTransformation(accuracyRating), 2) +
-            "\nSR: " + Math.Round(starRating, 2);
+            "\nFinger Control: " + Math.Round(fingerControlRating, 2);
 
             using (StreamWriter outputFile = new StreamWriter(beatmap.BeatmapInfo.OnlineBeatmapID + "values.txt"))
                 outputFile.WriteLine(values);
@@ -193,8 +188,8 @@ namespace osu.Game.Rulesets.Osu.Difficulty
 
             double zScore = 2.58f;
             double sqrt2 = Math.Sqrt(2.0f);
-            double accMultiplier = 800.0f;
-            double accScale = 1.25f;
+            double accMultiplier = 1200.0f;
+            double accScale = 1.3f;
 
             // Slider sigma calculations
             if (sliders > 0)

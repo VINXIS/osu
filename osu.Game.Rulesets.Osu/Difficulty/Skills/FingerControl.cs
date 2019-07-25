@@ -14,9 +14,9 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
     public class FingerControl : OsuSkill
     {
         private double StrainDecay = 1.0;
-        protected override double SkillMultiplier => 33.5;
+        protected override double SkillMultiplier => 25;
         protected override double StrainDecayBase => StrainDecay;
-        protected override double StarMultiplierPerRepeat => 1.02;
+        protected override double StarMultiplierPerRepeat => 1.05;
 
         private int repeatStrainCount = 0;
         private int prevRepeatStrainCount = 0;

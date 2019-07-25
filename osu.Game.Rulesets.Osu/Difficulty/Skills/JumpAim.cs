@@ -17,13 +17,12 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
         private double StrainDecay = 0.15;
 
         private const double angle_thresh = Math.PI / 4.0;
-        private const float prevMultiplier = 0.4f;
+        private const float prevMultiplier = 0.5f;
+        private const double distThresh = 125;
 
-        protected override double SkillMultiplier => 40;
+        protected override double SkillMultiplier => 45;
         protected override double StrainDecayBase => StrainDecay;
-        protected override double StarMultiplierPerRepeat => 1.04;
-
-        private double radius;
+        protected override double StarMultiplierPerRepeat => 1.07;
 
         protected override double StrainValueOf(DifficultyHitObject current)
         {
@@ -36,16 +35,15 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
             if (osuCurrent.BaseObject is Slider && osuCurrent.TravelTime < osuCurrent.StrainTime) StrainDecay = Math.Min(osuCurrent.TravelTime, osuCurrent.StrainTime - 30.0) / osuCurrent.StrainTime * 
                 (1.0 - Math.Pow(1.0 - StrainDecay, Math.Pow(1.0 + osuCurrent.TravelDistance / Math.Max(osuCurrent.TravelTime, 30.0), 3.0))) + 
                 Math.Max(30.0, osuCurrent.StrainTime - osuCurrent.TravelTime) / osuCurrent.StrainTime * StrainDecay;
-            if (radius == 0) radius = ((OsuHitObject)osuCurrent.BaseObject).Radius;
 
             double strain = 0;
-            if (osuCurrent.JumpDistance >= 90)
+            if (osuCurrent.JumpDistance >= distThresh)
                 strain = (applyDiminishingDist(osuCurrent.DistanceVector).Length + osuCurrent.TravelDistance) / osuCurrent.StrainTime;
 
             if (Previous.Count > 0 && osuCurrent.Angle != null)
             {
                 var osuPrevious = (OsuDifficultyHitObject)Previous[0];
-                if (osuCurrent.JumpDistance >= 90 && osuPrevious.JumpDistance >= 90)
+                if (osuCurrent.JumpDistance >= distThresh && osuPrevious.JumpDistance >= distThresh)
                 {
                     if (osuCurrent.Angle.Value <= angle_thresh)
                         strain = Math.Abs((applyDiminishingDist(osuCurrent.DistanceVector).Length - prevMultiplier * applyDiminishingDist(osuPrevious.DistanceVector).Length) + osuCurrent.TravelDistance) / Math.Max(osuCurrent.StrainTime, osuPrevious.StrainTime);
@@ -70,6 +68,6 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
             return strain;
         }
 
-        private Vector2 applyDiminishingDist(Vector2 val) => val - 90.0f * val.Normalized();
+        private Vector2 applyDiminishingDist(Vector2 val) => val - (float)distThresh * val.Normalized();
     }
 }
