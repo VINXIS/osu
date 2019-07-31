@@ -15,7 +15,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
     public class AimControl : OsuSkill
     {
         private double StrainDecay = 0.25;
-        protected override double SkillMultiplier => 300;
+        protected override double SkillMultiplier => 450;
         protected override double StrainDecayBase => StrainDecay;
         protected override double StarMultiplierPerRepeat => 1.1;
 
@@ -23,7 +23,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
         private const double pi_over_4 = Math.PI / 4.0;
         private const double angle_stretch = 3.0 / 4.0;
         private const double valThresh = 150;
-        private const double angleWeight = 0;
+        private const double angleWeight = 0.1;
         private double radius;
 
         protected override double StrainValueOf(DifficultyHitObject current)
@@ -68,23 +68,23 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                     double minDist = Math.Max(Math.Min(currDistance, prevDistance), valThresh);
 
                     double diffVel = Math.Abs(currVel - prevVel);
-                    double maxVel = Math.Max(Math.Max(currVel, prevVel), 1.0);
-                    double minVel = Math.Max(Math.Min(currVel, prevVel), 1.0);
+                    double maxVel = Math.Max(Math.Max(currVel, prevVel), 0.25);
+                    double minVel = Math.Max(Math.Min(currVel, prevVel), 0.25);
 
                     velScale = Math.Min(currVel, prevVel);
 
-                    awkVal = maxDist / minDist - 1.0;
+                    awkVal = diffDist / maxDist;
                     angleScale += (1.0 - angleWeight) * applySinTransformation(angle_stretch * (osuCurrent.Angle.Value - pi_over_4) / pi_over_2);
                     strainScale = minTime / maxTime;
                 }
                 strain = applySinTransformation(Math.Min(1.0, 114.0 * awkVal * angleScale * strainScale / maxTime));
 
-                test.Add(Tuple.Create(current.BaseObject.StartTime, strain));
+                test.Add(Tuple.Create(current.BaseObject.StartTime, awkVal));
             }
             return strain * velScale * sliderVel;
         }
 
-        private double applyDiminishingExp(double val) => Math.Max(val - radius, 0.0);
+        private double applyDiminishingExp(double val) => Math.Max(val - radius * 2.0, 0.0);
 
         private double applySinTransformation(double val) => Math.Pow(Math.Sin(pi_over_2 * val), 2.0);
     }

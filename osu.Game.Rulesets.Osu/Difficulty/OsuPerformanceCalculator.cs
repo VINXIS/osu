@@ -86,6 +86,15 @@ namespace osu.Game.Rulesets.Osu.Difficulty
                 Math.Pow(staminaValue, speed_pp_factor) + 
                 Math.Pow(speedValue, speed_pp_factor) + 
                 Math.Pow(fingerControlValue, speed_pp_factor), 1.0f / speed_pp_factor);
+
+            if (mods.Any(h => h is OsuModFlashlight))
+            {
+                // Apply object-based bonus for flashlight.
+                totalAimValue *= 1.0f + (0.35f * Math.Min(1.0f, totalHits / 200.0f) +
+                        (totalHits > 200 ? 0.3f * Math.Min(1.0f, (totalHits - 200) / 300.0f) +
+                        (totalHits > 500 ? (totalHits - 500) / 1200.0f : 0.0f) : 0.0f)) / 3.0f;
+            }
+
             double totalValue = multiplier * Math.Pow(
                 Math.Pow(totalAimValue, total_factor) + 
                 Math.Pow(totalSpeedValue, total_factor) +
@@ -210,14 +219,6 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             if (mods.Any(h => h is OsuModHidden))
                 jumpAimValue *= 1.0f + 0.04f * (12.0f - Attributes.ApproachRate);
 
-            if (mods.Any(h => h is OsuModFlashlight))
-            {
-                // Apply object-based bonus for flashlight.
-                jumpAimValue *= 1.0f + 0.35f * Math.Min(1.0f, totalHits / 200.0f) +
-                        (totalHits > 200 ? 0.3f * Math.Min(1.0f, (totalHits - 200) / 300.0f) +
-                        (totalHits > 500 ? (totalHits - 500) / 1200.0f : 0.0f) : 0.0f);
-            }
-
             // Scale the jump aim value with accuracy
             double accScale = (1.0f + 3.0f * accuracy) / 4.0f;
             double ODScale = 0.98f + Math.Pow(Attributes.OverallDifficulty, 2) / 2500;
@@ -254,14 +255,6 @@ namespace osu.Game.Rulesets.Osu.Difficulty
 
             if (mods.Any(m => m is OsuModHidden))
                 streamAimValue *= 1.0f + 0.1f * (12.0f - Attributes.ApproachRate);
-            
-            if (mods.Any(h => h is OsuModFlashlight))
-            {
-                // Apply object-based bonus for flashlight.
-                streamAimValue *= 1.0f + (0.35f * Math.Min(1.0f, totalHits / 200.0f) +
-                        (totalHits > 200 ? 0.3f * Math.Min(1.0f, (totalHits - 200) / 300.0f) +
-                        (totalHits > 500 ? (totalHits - 500) / 1200.0f : 0.0f) : 0.0f)) / 2.0f;
-            }
 
             // Scale the stream aim value with accuracy
             double accScale = (1.0f + 3.0f * accuracy) / 4.0f;
@@ -299,14 +292,6 @@ namespace osu.Game.Rulesets.Osu.Difficulty
 
             if (mods.Any(m => m is OsuModHidden))
                 aimControlValue *= 1.0f + 0.06f * (12.0f - Attributes.ApproachRate);
-
-            if (mods.Any(h => h is OsuModFlashlight))
-            {
-                // Apply object-based bonus for flashlight.
-                aimControlValue *= 1.0f + 0.35f * Math.Min(1.0f, totalHits / 200.0f) +
-                        (totalHits > 200 ? 0.3f * Math.Min(1.0f, (totalHits - 200) / 300.0f) +
-                        (totalHits > 500 ? (totalHits - 500) / 1200.0f : 0.0f) : 0.0f);
-            }
 
             // Scale the control aim value with accuracy
             double accScale = (1.0f + 3.0f * accuracy) / 4.0f;
