@@ -23,7 +23,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
         private const double difficulty_multiplier = 0.0675;
         private const double star_rating_scale_factor = 1.485 * 3.0;
         private const double aim_star_factor = 1.1;
-        private const double speed_star_factor = 2.2;
+        private const double speed_star_factor = 2.0;
         private const double total_star_factor = 2.2;
 
         public OsuDifficultyCalculator(Ruleset ruleset, WorkingBeatmap beatmap)
@@ -77,7 +77,8 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             IList<double> fingerControlComboSr = fingerControl.ComboStarRatings;
             IList<double> fingerControlMissCounts = fingerControl.MissCounts;
 
-            const double miss_sr_increment = OsuSkill.MISS_STAR_RATING_INCREMENT;
+            const double miss_sr_increment = OsuSkill.MISS_STAR_RATING_INCREMENT_MULTIPLIER;
+            const double miss_sr_exponent = OsuSkill.MISS_STAR_RATING_INCREMENT_EXPONENT;
 
             double jumpAimRating = jumpAimComboSr.Last();
             double streamAimRating = streamAimComboSr.Last();
@@ -117,6 +118,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
                 SpeedRating = StarTransformation(totalSpeedRating),
                 Mods = mods,
                 MissStarRatingIncrement = miss_sr_increment,
+                MissStarRatingExponent = miss_sr_exponent,
                 ApproachRate = preempt > 1200 ? (1800 - preempt) / 120 : (1200 - preempt) / 150 + 5,
                 OverallDifficulty = overralDifficulty,
                 MaxCombo = maxCombo,

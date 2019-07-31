@@ -14,11 +14,11 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
     public class Speed : OsuSkill
     {
         private double StrainDecay = 1.0;
-        protected override double SkillMultiplier => 39;
+        protected override double SkillMultiplier => 46;
         protected override double StrainDecayBase => StrainDecay;
-        protected override double StarMultiplierPerRepeat => 1.02;
+        protected override double StarMultiplierPerRepeat => 1.01;
 
-        private const double quarter220 = 60000 / (4 * 220);
+        private const double quarter240 = 60000 / (4 * 240);
 
         protected override double StrainValueOf(DifficultyHitObject current)
         {
@@ -26,11 +26,11 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                 return 0;
 
             var osuCurrent = (OsuDifficultyHitObject)current;
-            double strainTime = Math.Max(osuCurrent.DeltaTime, 37.5);
+            double strainTime = Math.Max(osuCurrent.DeltaTime, 40);
 
             StrainDecay = Math.Pow(5.0 / 6.0, 1000.0 / Math.Min(strainTime, 200.0));
 
-            double strain = Math.Pow(quarter220 / strainTime, 2.0);
+            double strain = Math.Pow(quarter240 / strainTime, 2.0);
             if (osuCurrent.BaseObject is Slider) strain /= 4;
 
             return strain;

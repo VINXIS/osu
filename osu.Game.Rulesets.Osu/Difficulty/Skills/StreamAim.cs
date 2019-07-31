@@ -13,18 +13,20 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
     /// </summary>
     public class StreamAim : OsuSkill
     {
-        private double StrainDecay = 0.3;
+        private double StrainDecay = 0.25;
+        private double radius;
         private const double angle_bonus_begin = 5.0 * Math.PI / 6.0;
         private const double angle_bonus_end = Math.PI / 3.0;
         private const double pi_over_2 = Math.PI / 2.0;
+        private const double distThresh = 125;
 
-        protected override double SkillMultiplier => 2300;
+        protected override double SkillMultiplier => 2200;
         protected override double StrainDecayBase => StrainDecay;
         protected override double StarMultiplierPerRepeat => 1.07;
 
         protected override double StrainValueOf(DifficultyHitObject current)
         {
-            StrainDecay = 0.3;
+            StrainDecay = 0.25;
 
             if (current.BaseObject is Spinner)
                 return 0;
@@ -33,16 +35,17 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
             if (osuCurrent.BaseObject is Slider && osuCurrent.TravelTime < osuCurrent.StrainTime) StrainDecay = Math.Min(osuCurrent.TravelTime, osuCurrent.StrainTime - 30.0) / osuCurrent.StrainTime * 
                 (1.0 - Math.Pow(1.0 - StrainDecay, Math.Pow(1.0 + osuCurrent.TravelDistance / Math.Max(osuCurrent.TravelTime, 30.0), 3.0))) + 
                 Math.Max(30.0, osuCurrent.StrainTime - osuCurrent.TravelTime) / osuCurrent.StrainTime * StrainDecay;
+            if (radius == 0) radius = ((OsuHitObject)osuCurrent.BaseObject).Radius;
 
-            double distance = osuCurrent.TravelDistance + osuCurrent.JumpDistance + Math.Sqrt(osuCurrent.TravelDistance * osuCurrent.JumpDistance);
+            double distance = osuCurrent.TravelDistance + osuCurrent.JumpDistance;
             double angleBonus = 1.0;
             double strain = 0;
 
             double total1 = 0;
             double total2 = 0;
 
-            if (distance < 150)
-                strain = Math.Pow(Math.Sin(pi_over_2 * (distance / 150)), 2.0);
+            if (distance < distThresh)
+                strain = Math.Pow(Math.Sin(pi_over_2 * (distance / distThresh)), 2.0);
             else
                 strain = 1.0;
                 
@@ -50,9 +53,9 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
             if (osuCurrent.Angle != null)
             {
                 if (osuCurrent.Angle.Value < angle_bonus_end)
-                    angleBonus = 1.25;
+                    angleBonus = 1.5;
                 else if (osuCurrent.Angle.Value < angle_bonus_begin)
-                    angleBonus = 1.0 + (Math.Pow(Math.Sin(angle_bonus_begin - osuCurrent.Angle.Value), 2.0) / 4.0);
+                    angleBonus = 1.0 + Math.Pow(Math.Sin(angle_bonus_begin - osuCurrent.Angle.Value), 2.0) / 2.0;
             }
 
             total1 = strain * angleBonus / osuCurrent.StrainTime;
@@ -60,11 +63,11 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
             if (Previous.Count > 0)
             {
                 var osuPrevious = (OsuDifficultyHitObject)Previous[0];
-                double prevDistance = osuPrevious.TravelDistance + osuPrevious.JumpDistance + Math.Sqrt(osuPrevious.TravelDistance * osuPrevious.JumpDistance);
+                double prevDistance = osuPrevious.TravelDistance + osuPrevious.JumpDistance;
                 double prevStrain = 0;
 
-                if (prevDistance < 150)
-                    prevStrain = Math.Pow(Math.Sin(pi_over_2 * (prevDistance / 150)), 2.0);
+                if (prevDistance < distThresh)
+                    prevStrain = Math.Pow(Math.Sin(pi_over_2 * (prevDistance / distThresh)), 2.0);
                 else
                     prevStrain = 1.0;
 

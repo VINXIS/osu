@@ -9,6 +9,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
     public class OsuDifficultyAttributes : DifficultyAttributes
     {
         public double MissStarRatingIncrement;
+        public double MissStarRatingExponent;
 
         public double AimRating;
         public double SpeedRating;

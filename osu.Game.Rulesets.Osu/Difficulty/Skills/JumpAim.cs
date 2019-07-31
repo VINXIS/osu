@@ -15,9 +15,8 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
     public class JumpAim : OsuSkill
     {
         private double StrainDecay = 0.15;
-
-        private const double angle_thresh = Math.PI / 4.0;
         private const float prevMultiplier = 0.5f;
+        private double angle_thresh = Math.PI / 2.0 - Math.Acos(prevMultiplier / 2.0);
         private const double distThresh = 125;
 
         protected override double SkillMultiplier => 45;

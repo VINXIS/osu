@@ -14,9 +14,9 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
     public class Stamina : OsuSkill
     {
         private double StrainDecay = 1.0;
-        protected override double SkillMultiplier => 3.875;
+        protected override double SkillMultiplier => 3.0;
         protected override double StrainDecayBase => StrainDecay;
-        protected override double StarMultiplierPerRepeat => 1.02;
+        protected override double StarMultiplierPerRepeat => 1.0677;
 
         protected override double StrainValueOf(DifficultyHitObject current)
         {

@@ -15,14 +15,15 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
     public class AimControl : OsuSkill
     {
         private double StrainDecay = 0.25;
-        protected override double SkillMultiplier => 50000;
+        protected override double SkillMultiplier => 300;
         protected override double StrainDecayBase => StrainDecay;
         protected override double StarMultiplierPerRepeat => 1.1;
 
         private const double pi_over_2 = Math.PI / 2.0;
         private const double pi_over_4 = Math.PI / 4.0;
-        private const double angle_stretch = 2.0 / 3.0;
-        private const double valThresh = 0.25;
+        private const double angle_stretch = 3.0 / 4.0;
+        private const double valThresh = 150;
+        private const double angleWeight = 0;
         private double radius;
 
         protected override double StrainValueOf(DifficultyHitObject current)
@@ -41,43 +42,50 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
             test.Add(Tuple.Create(current.BaseObject.StartTime, 0.0));
 
             double strain = 0;
-            double currVel = 0;
-            double sliderVel = 1.0 + Math.Min(1.0, osuCurrent.TravelDistance / osuCurrent.TravelTime);
+            double velScale = 0;
+            double sliderVel = 1.0 + osuCurrent.TravelDistance / osuCurrent.TravelTime;
 
             if (Previous.Count > 0)
             {
                 var osuPrevious = (OsuDifficultyHitObject)Previous[0];
-                double jumpAwk = 0;
-                double distScale = 1.0;
-                double angleScale = 0;
+                double awkVal = 0;
+                double angleScale = angleWeight;
+                double strainScale = 0;
 
                 double maxTime = Math.Max(osuCurrent.StrainTime, osuPrevious.StrainTime);
+                double minTime = Math.Min(osuCurrent.StrainTime, osuPrevious.StrainTime);
 
                 if (osuCurrent.Angle != null)
                 {
                     double currDistance = applyDiminishingExp(osuCurrent.JumpDistance + osuCurrent.TravelDistance);
                     double prevDistance = applyDiminishingExp(osuPrevious.JumpDistance + osuPrevious.TravelDistance);
+
+                    double currVel = currDistance / osuCurrent.StrainTime;
+                    double prevVel = prevDistance / osuPrevious.StrainTime;
                     
                     double diffDist = Math.Abs(currDistance - prevDistance);
                     double maxDist = Math.Max(Math.Max(currDistance, prevDistance), valThresh);
-                    double minDist = Math.Min(currDistance, prevDistance);
+                    double minDist = Math.Max(Math.Min(currDistance, prevDistance), valThresh);
 
-                    currVel = Math.Min(1.0, currDistance / maxTime);
+                    double diffVel = Math.Abs(currVel - prevVel);
+                    double maxVel = Math.Max(Math.Max(currVel, prevVel), 1.0);
+                    double minVel = Math.Max(Math.Min(currVel, prevVel), 1.0);
 
-                    double diffVel = Math.Abs(currDistance / osuCurrent.StrainTime - prevDistance / osuPrevious.StrainTime);
-                    double maxVel = Math.Max(Math.Max(currDistance / osuCurrent.StrainTime, prevDistance / osuPrevious.StrainTime), valThresh);
+                    velScale = Math.Min(currVel, prevVel);
 
-                    jumpAwk = Math.Pow(Math.Sin(pi_over_2 * diffVel / maxVel), 2.0);
-                    if (minDist < 125) distScale = Math.Pow(Math.Sin(pi_over_2 * minDist / 125), 2.0);
-                    angleScale = Math.Pow(Math.Sin(angle_stretch * (osuCurrent.Angle.Value - pi_over_4)), 2.0);
+                    awkVal = maxDist / minDist - 1.0;
+                    angleScale += (1.0 - angleWeight) * applySinTransformation(angle_stretch * (osuCurrent.Angle.Value - pi_over_4) / pi_over_2);
+                    strainScale = minTime / maxTime;
                 }
+                strain = applySinTransformation(Math.Min(1.0, 114.0 * awkVal * angleScale * strainScale / maxTime));
 
-                test.Add(Tuple.Create(current.BaseObject.StartTime, jumpAwk));
-                strain = jumpAwk * distScale * angleScale / maxTime;
+                test.Add(Tuple.Create(current.BaseObject.StartTime, strain));
             }
-            return strain * currVel * sliderVel;
+            return strain * velScale * sliderVel;
         }
 
         private double applyDiminishingExp(double val) => Math.Max(val - radius, 0.0);
+
+        private double applySinTransformation(double val) => Math.Pow(Math.Sin(pi_over_2 * val), 2.0);
     }
 }

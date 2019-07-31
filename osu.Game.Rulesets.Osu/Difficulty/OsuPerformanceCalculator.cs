@@ -33,7 +33,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
         private int countMiss;
         private const double combo_weight = 0.5;
         private const double aim_pp_factor = 1.1f;
-        private const double speed_pp_factor = 2.2f;
+        private const double speed_pp_factor = 2.0f;
         private const double total_factor = 2.2f;
 
         public OsuPerformanceCalculator(Ruleset ruleset, WorkingBeatmap beatmap, ScoreInfo score)
@@ -138,6 +138,9 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             return ret;
         }
 
+        // get star rating corresponding to miss count in miss count list
+        private double missStarRating(double sr, int i) => sr * (1 - Math.Pow((i + 1), Attributes.MissStarRatingExponent) * Attributes.MissStarRatingIncrement);
+
         private double interpMissCountStarRating(double sr, IList<double> values, int missCount)
         {
             double increment = Attributes.MissStarRatingIncrement;
@@ -151,7 +154,8 @@ namespace osu.Game.Rulesets.Osu.Difficulty
 
             if (missCount < values[0])
             {
-                return sr - increment * missCount / values[0];
+                t = missCount / values[0];
+                return sr * (1 - t) + missStarRating(sr, 0) * t;
             }
 
             for (int i = 0; i < values.Count; ++i)
@@ -164,20 +168,19 @@ namespace osu.Game.Rulesets.Osu.Difficulty
                         continue;
                     }
 
-                    return sr - (i + 1) * increment;
+                    return missStarRating(sr, i);
                 }
 
                 if (i < values.Count - 1 && missCount < values[i + 1])
                 {
                     t = (missCount - values[i]) / (values[i + 1] - values[i]);
-
-                    return sr - (i + 1 + t) * increment;
+                    return missStarRating(sr, i) * (1 - t) + missStarRating(sr, i + 1) * t;
                 }
             }
 
             // more misses than max evaluated, interpolate to zero
             t = (missCount - values.Last()) / (beatmapMaxCombo - values.Last());
-            return (sr - values.Count * increment) * (1 - t);
+            return missStarRating(sr, values.Count - 1) * (1 - t);
         }
 
         private double computeJumpAimValue(Dictionary<string, double> categoryRatings = null)
@@ -205,7 +208,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
 
             // We want to give more reward for lower AR when it comes to aim and HD. This nerfs high AR and buffs lower AR.
             if (mods.Any(h => h is OsuModHidden))
-                jumpAimValue *= Math.Max(1.0f, 1.0f + 0.04f * (9.0f - Attributes.ApproachRate));
+                jumpAimValue *= 1.0f + 0.04f * (12.0f - Attributes.ApproachRate);
 
             if (mods.Any(h => h is OsuModFlashlight))
             {
@@ -250,7 +253,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             streamAimValue *= approachRateFactor;
 
             if (mods.Any(m => m is OsuModHidden))
-                streamAimValue *= 1.0f + 0.08f * (12.0f - Attributes.ApproachRate);
+                streamAimValue *= 1.0f + 0.1f * (12.0f - Attributes.ApproachRate);
             
             if (mods.Any(h => h is OsuModFlashlight))
             {
@@ -295,7 +298,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             aimControlValue *= approachRateFactor;
 
             if (mods.Any(m => m is OsuModHidden))
-                aimControlValue *= 1.0f + 0.08f * (12.0f - Attributes.ApproachRate);
+                aimControlValue *= 1.0f + 0.06f * (12.0f - Attributes.ApproachRate);
 
             if (mods.Any(h => h is OsuModFlashlight))
             {
