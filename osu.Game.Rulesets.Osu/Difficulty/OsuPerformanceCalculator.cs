@@ -94,6 +94,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
                         (totalHits > 200 ? 0.3f * Math.Min(1.0f, (totalHits - 200) / 300.0f) +
                         (totalHits > 500 ? (totalHits - 500) / 1200.0f : 0.0f) : 0.0f)) / 3.0f;
             }
+            totalSpeedValue *= 1.2f;
 
             double totalValue = multiplier * Math.Pow(
                 Math.Pow(totalAimValue, total_factor) + 
@@ -203,9 +204,6 @@ namespace osu.Game.Rulesets.Osu.Difficulty
 
             double jumpAimValue = Math.Pow(5.0f * Math.Max(1.0f, rawJumpAim / 0.0675f) - 4.0f, 3.0f) / 100000.0f;
 
-            // Penalize misses exponentially.
-            jumpAimValue *= Math.Pow(0.95, countMiss);
-
             double approachRateFactor = 1.0f;
 
             if (Attributes.ApproachRate > 10.33f)
@@ -243,9 +241,6 @@ namespace osu.Game.Rulesets.Osu.Difficulty
                 rawStreamAim = Math.Pow(rawStreamAim, 1.25f);
 
             double streamAimValue = Math.Pow(5.0f * Math.Max(1.0f, rawStreamAim / 0.0675f) - 4.0f, 3.0f) / 100000.0f;
-            
-            // Penalize misses exponentially.
-            streamAimValue *= Math.Pow(0.95f, countMiss);
 
             double approachRateFactor = 1.0f;
             if (Attributes.ApproachRate > 10.33f)
@@ -281,9 +276,6 @@ namespace osu.Game.Rulesets.Osu.Difficulty
     
             double aimControlValue = Math.Pow(5.0f * Math.Max(1.0f, rawAimControl / 0.0675f) - 4.0f, 3.0f) / 100000.0f;
 
-            // Penalize misses exponentially.
-            aimControlValue *= Math.Pow(0.95f, countMiss);
-
             double approachRateFactor = 1.0f;
             if (Attributes.ApproachRate > 10.33f)
                 approachRateFactor += 0.3f * (Attributes.ApproachRate - 10.33f);
@@ -314,9 +306,6 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             double rawStamina = Math.Pow(staminaComboStarRating, combo_weight) * Math.Pow(staminaMissCountStarRating, 1 - combo_weight);
             double staminaValue = Math.Pow(5.0f * Math.Max(1.0f, rawStamina / 0.0675f) - 4.0f, 3.0f) / 100000.0f;
 
-            // Penalize misses exponentially.
-            staminaValue *= Math.Pow(0.99f, countMiss);
-
             // Scale the stamina value with accuracy
             double accScale = Math.Pow(accuracy, 10.0f);
             double ODScale = 0.5f + Math.Pow(Attributes.OverallDifficulty, 2) / 150;
@@ -341,9 +330,6 @@ namespace osu.Game.Rulesets.Osu.Difficulty
                 rawSpeed = Math.Pow(rawSpeed, 1.25f);
 
             double speedValue = Math.Pow(5.0f * Math.Max(1.0f, rawSpeed / 0.0675f) - 4.0f, 3.0f) / 100000.0f;
-
-            // Penalize misses exponentially.
-            speedValue *= Math.Pow(0.99f, countMiss);
 
             // Scale the speed value with accuracy
             double accScale = Math.Pow(accuracy, 10.0f);
@@ -375,9 +361,6 @@ namespace osu.Game.Rulesets.Osu.Difficulty
                 approachRateFactor += 0.3f * (Attributes.ApproachRate - 10.33f);
 
             fingerControlValue *= approachRateFactor;
-
-            // Penalize misses exponentially.
-            fingerControlValue *= Math.Pow(0.99f, countMiss);
 
             // Scale the finger control value with accuracy
             double accScale = Math.Pow(accuracy, 10.0f);

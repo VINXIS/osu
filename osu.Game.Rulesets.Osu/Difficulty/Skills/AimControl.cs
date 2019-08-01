@@ -15,7 +15,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
     public class AimControl : OsuSkill
     {
         private double StrainDecay = 0.25;
-        protected override double SkillMultiplier => 450;
+        protected override double SkillMultiplier => 525;
         protected override double StrainDecayBase => StrainDecay;
         protected override double StarMultiplierPerRepeat => 1.1;
 
@@ -43,7 +43,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
 
             double strain = 0;
             double velScale = 0;
-            double sliderVel = 1.0 + osuCurrent.TravelDistance / osuCurrent.TravelTime;
+            double sliderVel = 1.0 + osuCurrent.TravelDistance / osuCurrent.TravelTime + Math.Sqrt(osuCurrent.JumpDistance * osuCurrent.TravelDistance) / osuCurrent.StrainTime;
 
             if (Previous.Count > 0)
             {
@@ -67,17 +67,13 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                     double maxDist = Math.Max(Math.Max(currDistance, prevDistance), valThresh);
                     double minDist = Math.Max(Math.Min(currDistance, prevDistance), valThresh);
 
-                    double diffVel = Math.Abs(currVel - prevVel);
-                    double maxVel = Math.Max(Math.Max(currVel, prevVel), 0.25);
-                    double minVel = Math.Max(Math.Min(currVel, prevVel), 0.25);
-
                     velScale = Math.Min(currVel, prevVel);
 
                     awkVal = diffDist / maxDist;
                     angleScale += (1.0 - angleWeight) * applySinTransformation(angle_stretch * (osuCurrent.Angle.Value - pi_over_4) / pi_over_2);
                     strainScale = minTime / maxTime;
                 }
-                strain = applySinTransformation(Math.Min(1.0, 114.0 * awkVal * angleScale * strainScale / maxTime));
+                strain = applySinTransformation(Math.Min(1.0, 111.0 * awkVal * angleScale / maxTime));
 
                 test.Add(Tuple.Create(current.BaseObject.StartTime, awkVal));
             }

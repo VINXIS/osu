@@ -58,7 +58,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                     angleBonus = 1.0 + Math.Pow(Math.Sin(angle_bonus_begin - osuCurrent.Angle.Value), 2.0) / 2.0;
             }
 
-            total1 = strain * angleBonus / osuCurrent.StrainTime;
+            total1 = angleBonus * strain / osuCurrent.StrainTime;
 
             if (Previous.Count > 0)
             {
