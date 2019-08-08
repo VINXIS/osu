@@ -16,7 +16,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
         private double StrainDecay = 1.0;
         protected override double SkillMultiplier => 3.0;
         protected override double StrainDecayBase => StrainDecay;
-        protected override double StarMultiplierPerRepeat => 1.0677;
+        protected override double StarMultiplierPerRepeat => 1.04;
 
         protected override double StrainValueOf(DifficultyHitObject current)
         {
@@ -25,10 +25,12 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
 
             var osuCurrent = (OsuDifficultyHitObject)current;
 
-            StrainDecay = Math.Pow(63.0 / 64.0, 1000.0 / Math.Min(osuCurrent.StrainTime, 200.0));
+            StrainDecay = Math.Pow(31.0 / 32.0, 1000.0 / Math.Min(osuCurrent.StrainTime, 500.0));
 
-            double strain = Math.Pow(75.0 / osuCurrent.StrainTime, 2.0);
-            if (osuCurrent.BaseObject is Slider) strain /= 4;
+            double strain = 0;
+
+            if (osuCurrent.StrainTime < 75) strain = Math.Pow(75.0 / osuCurrent.StrainTime, 2.0);
+            else strain = 75.0 / osuCurrent.StrainTime;
 
             return strain;
         }

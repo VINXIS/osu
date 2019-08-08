@@ -18,10 +18,11 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
         private const float prevMultiplier = 0.5f;
         private double angle_thresh = Math.PI / 2.0 - Math.Acos(prevMultiplier / 2.0);
         private const double distThresh = 125;
+        private const double strainThresh = 90;
 
-        protected override double SkillMultiplier => 45;
+        protected override double SkillMultiplier => 35;
         protected override double StrainDecayBase => StrainDecay;
-        protected override double StarMultiplierPerRepeat => 1.07;
+        protected override double StarMultiplierPerRepeat => 1.04;
 
         protected override double StrainValueOf(DifficultyHitObject current)
         {
@@ -42,6 +43,10 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
             if (Previous.Count > 0 && osuCurrent.Angle != null)
             {
                 var osuPrevious = (OsuDifficultyHitObject)Previous[0];
+
+                double currTime = Math.Max(strainThresh, osuCurrent.StrainTime - osuCurrent.TravelTime + 50);
+                double prevTime = Math.Max(strainThresh, osuPrevious.StrainTime - osuPrevious.TravelTime + 50);
+
                 if (osuCurrent.JumpDistance >= distThresh && osuPrevious.JumpDistance >= distThresh)
                 {
                     if (osuCurrent.Angle.Value <= angle_thresh)
@@ -59,7 +64,12 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
                         double strain1 = (applyDiminishingDist(osuCurrent.DistanceVector) + prevMultiplier * applyDiminishingDist(Prev1)).Length;
                         double strain2 = (applyDiminishingDist(osuCurrent.DistanceVector) + prevMultiplier * applyDiminishingDist(Prev2)).Length;
 
-                        strain = (Math.Min(strain1, strain2) + osuCurrent.TravelDistance) / Math.Max(osuCurrent.StrainTime, osuPrevious.StrainTime);
+                        double maxDist = Math.Max(osuCurrent.JumpDistance, osuPrevious.JumpDistance);
+                        double minDist = Math.Min(osuCurrent.JumpDistance, osuPrevious.JumpDistance);
+                        double diffDist = Math.Min(maxDist - minDist, distThresh);
+                        double jumpRatio = Math.Max(maxDist, distThresh) / Math.Max(minDist, distThresh) - 1.0;
+
+                        strain = (Math.Min(strain1, strain2) + osuCurrent.TravelDistance + diffDist * jumpRatio) / Math.Max(currTime, prevTime);
                     }
                 }
             }

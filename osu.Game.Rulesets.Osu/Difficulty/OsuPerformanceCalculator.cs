@@ -32,9 +32,9 @@ namespace osu.Game.Rulesets.Osu.Difficulty
         private int countMeh;
         private int countMiss;
         private const double combo_weight = 0.5;
-        private const double aim_pp_factor = 1.1f;
-        private const double speed_pp_factor = 2.0f;
-        private const double total_factor = 2.2f;
+        private const double aim_pp_factor = 1.3f;
+        private const double speed_pp_factor = 1.5f;
+        private const double total_factor = 1.1f;
 
         public OsuPerformanceCalculator(Ruleset ruleset, WorkingBeatmap beatmap, ScoreInfo score)
             : base(ruleset, beatmap, score)
@@ -62,7 +62,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
                 return 0;
 
             // Custom multipliers for NoFail and SpunOut.
-            double multiplier = 1.65f; // This is being adjusted to keep the final pp value scaled around what it used to be when changing things
+            double multiplier = 1.2f; // This is being adjusted to keep the final pp value scaled around what it used to be when changing things
 
             if (mods.Any(m => m is OsuModNoFail))
                 multiplier *= 0.90f;
@@ -94,7 +94,6 @@ namespace osu.Game.Rulesets.Osu.Difficulty
                         (totalHits > 200 ? 0.3f * Math.Min(1.0f, (totalHits - 200) / 300.0f) +
                         (totalHits > 500 ? (totalHits - 500) / 1200.0f : 0.0f) : 0.0f)) / 3.0f;
             }
-            totalSpeedValue *= 1.2f;
 
             double totalValue = multiplier * Math.Pow(
                 Math.Pow(totalAimValue, total_factor) + 
@@ -215,7 +214,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
 
             // We want to give more reward for lower AR when it comes to aim and HD. This nerfs high AR and buffs lower AR.
             if (mods.Any(h => h is OsuModHidden))
-                jumpAimValue *= 1.0f + 0.04f * (12.0f - Attributes.ApproachRate);
+                jumpAimValue *= 1.0f + 0.02f * (12.0f - Attributes.ApproachRate);
 
             // Scale the jump aim value with accuracy
             double accScale = (1.0f + 3.0f * accuracy) / 4.0f;
@@ -248,8 +247,9 @@ namespace osu.Game.Rulesets.Osu.Difficulty
 
             streamAimValue *= approachRateFactor;
 
+            // We want to give more reward for lower AR when it comes to aim and HD. This nerfs high AR and buffs lower AR.
             if (mods.Any(m => m is OsuModHidden))
-                streamAimValue *= 1.0f + 0.1f * (12.0f - Attributes.ApproachRate);
+                streamAimValue *= 1.0f + 0.15f * (12.0f - Attributes.ApproachRate);
 
             // Scale the stream aim value with accuracy
             double accScale = (1.0f + 3.0f * accuracy) / 4.0f;
@@ -282,8 +282,9 @@ namespace osu.Game.Rulesets.Osu.Difficulty
 
             aimControlValue *= approachRateFactor;
 
+            // We want to give more reward for lower AR when it comes to aim and HD. This nerfs high AR and buffs lower AR.
             if (mods.Any(m => m is OsuModHidden))
-                aimControlValue *= 1.0f + 0.06f * (12.0f - Attributes.ApproachRate);
+                aimControlValue *= 1.0f + 0.05f * (12.0f - Attributes.ApproachRate);
 
             // Scale the control aim value with accuracy
             double accScale = (1.0f + 3.0f * accuracy) / 4.0f;
@@ -307,7 +308,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             double staminaValue = Math.Pow(5.0f * Math.Max(1.0f, rawStamina / 0.0675f) - 4.0f, 3.0f) / 100000.0f;
 
             // Scale the stamina value with accuracy
-            double accScale = Math.Pow(accuracy, 10.0f);
+            double accScale = 0.5f + Math.Pow(Math.Sin(2.5f * Math.PI * (accuracy - 0.8f)), 2.0f) / 2.0f;
             double ODScale = 0.5f + Math.Pow(Attributes.OverallDifficulty, 2) / 150;
             staminaValue *= 0.1f + accScale * ODScale;
 
@@ -332,7 +333,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             double speedValue = Math.Pow(5.0f * Math.Max(1.0f, rawSpeed / 0.0675f) - 4.0f, 3.0f) / 100000.0f;
 
             // Scale the speed value with accuracy
-            double accScale = Math.Pow(accuracy, 10.0f);
+            double accScale = 0.5f + Math.Pow(Math.Sin(2.5f * Math.PI * (accuracy - 0.8f)), 2.0f) / 2.0f;
             double ODScale = 0.5f + Math.Pow(Attributes.OverallDifficulty, 2) / 150;
             speedValue *= 0.1f + accScale * ODScale;
 
@@ -363,7 +364,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             fingerControlValue *= approachRateFactor;
 
             // Scale the finger control value with accuracy
-            double accScale = Math.Pow(accuracy, 10.0f);
+            double accScale = 0.5f + Math.Pow(Math.Sin(2.5f * Math.PI * (accuracy - 0.8f)), 2.0f) / 2.0f;
             double ODScale = 0.5f + Math.Pow(Attributes.OverallDifficulty, 2) / 150;
             fingerControlValue *= 0.1f + accScale * ODScale;
 
