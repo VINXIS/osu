@@ -33,7 +33,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
         private int countMiss;
         private const double combo_weight = 0.5;
         private const double aim_pp_factor = 1.3f;
-        private const double speed_pp_factor = 1.5f;
+        private const double speed_pp_factor = 2.0f;
         private const double total_factor = 1.1f;
 
         public OsuPerformanceCalculator(Ruleset ruleset, WorkingBeatmap beatmap, ScoreInfo score)
@@ -89,10 +89,16 @@ namespace osu.Game.Rulesets.Osu.Difficulty
 
             if (mods.Any(h => h is OsuModFlashlight))
             {
+                double modBonus = 1.0;
+
                 // Apply object-based bonus for flashlight.
-                totalAimValue *= 1.0f + (0.35f * Math.Min(1.0f, totalHits / 200.0f) +
+                modBonus += (0.35f * Math.Min(1.0f, totalHits / 200.0f) +
                         (totalHits > 200 ? 0.3f * Math.Min(1.0f, (totalHits - 200) / 300.0f) +
-                        (totalHits > 500 ? (totalHits - 500) / 1200.0f : 0.0f) : 0.0f)) / 3.0f;
+                        (totalHits > 500 ? (totalHits - 500) / 1200.0f : 0.0f) : 0.0f));
+                if (mods.Any(h => h is OsuModHidden))
+                    modBonus *= 1.1f;
+
+                totalAimValue *= modBonus;
             }
 
             double totalValue = multiplier * Math.Pow(
@@ -207,14 +213,10 @@ namespace osu.Game.Rulesets.Osu.Difficulty
 
             if (Attributes.ApproachRate > 10.33f)
                 approachRateFactor += 0.3f * (Attributes.ApproachRate - 10.33f);
-            else if (Attributes.ApproachRate < 8.0f)
-                approachRateFactor += 0.01f * (8.0f - Attributes.ApproachRate);
+            else if (Attributes.ApproachRate < 9.0f)
+                approachRateFactor += 0.1f * (9.0f - Attributes.ApproachRate);
 
             jumpAimValue *= approachRateFactor;
-
-            // We want to give more reward for lower AR when it comes to aim and HD. This nerfs high AR and buffs lower AR.
-            if (mods.Any(h => h is OsuModHidden))
-                jumpAimValue *= 1.0f + 0.02f * (12.0f - Attributes.ApproachRate);
 
             // Scale the jump aim value with accuracy
             double accScale = (1.0f + 3.0f * accuracy) / 4.0f;
@@ -244,6 +246,8 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             double approachRateFactor = 1.0f;
             if (Attributes.ApproachRate > 10.33f)
                 approachRateFactor += 0.3f * (Attributes.ApproachRate - 10.33f);
+            else if (Attributes.ApproachRate < 9.0f)
+                approachRateFactor += 0.1f * (9.0f - Attributes.ApproachRate);
 
             streamAimValue *= approachRateFactor;
 
@@ -279,6 +283,8 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             double approachRateFactor = 1.0f;
             if (Attributes.ApproachRate > 10.33f)
                 approachRateFactor += 0.3f * (Attributes.ApproachRate - 10.33f);
+            else if (Attributes.ApproachRate < 9.0f)
+                approachRateFactor += 0.1f * (9.0f - Attributes.ApproachRate);
 
             aimControlValue *= approachRateFactor;
 
@@ -412,7 +418,12 @@ namespace osu.Game.Rulesets.Osu.Difficulty
 
             sigmaTotal = 1.0f / (1.0f / sigmaCircle + 1.0f / sigmaSlider);
 
-            return accMultiplier * Math.Pow(accScale, -sigmaTotal);
+            double accValue = accMultiplier * Math.Pow(accScale, -sigmaTotal);
+
+            if (mods.Any(m => m is OsuModHidden))
+                accValue *= 1.1f;
+
+            return accValue;
         }
 
         private double totalHits => countGreat + countGood + countMeh + countMiss;
