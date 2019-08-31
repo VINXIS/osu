@@ -18,7 +18,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
         private const double distThresh = 135;
         private const double strainThresh = 50;
 
-        protected override double SkillMultiplier => 195000;
+        protected override double SkillMultiplier => 177000;
         protected override double StrainDecayBase => StrainDecay;
         protected override double StarMultiplierPerRepeat => 1.07;
 
@@ -40,7 +40,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
             double currStrain = 0.05 + 0.95 * Math.Pow(Math.Sin(pi_over_2 * Math.Min(distance / distThresh, 1.0)), 6.0);
 
             if (osuCurrent.Angle != null)
-                angleBonus += Math.Pow(Math.Sin(osuCurrent.Angle.Value), 2.0) / 2.0;
+                angleBonus += Math.Pow(Math.Sin(osuCurrent.Angle.Value), 2.0) / 3.0;
 
             return angleBonus * currStrain / Math.Pow(strainTime, 2.0);
         }

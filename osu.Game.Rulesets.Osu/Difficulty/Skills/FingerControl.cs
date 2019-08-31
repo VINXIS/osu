@@ -14,7 +14,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
     public class FingerControl : OsuSkill
     {
         private double StrainDecay = 0.5;
-        protected override double SkillMultiplier => 37.5;
+        protected override double SkillMultiplier => 42;
         protected override double StrainDecayBase => StrainDecay;
         protected override double StarMultiplierPerRepeat => 1.04;
 
@@ -29,9 +29,9 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
 
             var osuCurrent = (OsuDifficultyHitObject)current;
             double strainTime = Math.Max(osuCurrent.DeltaTime, 46.875);
-            StrainDecay = Math.Pow(0.9, 1000.0 / Math.Min(strainTime, 200.0));
+            StrainDecay = Math.Pow(0.9, 1000.0 / Math.Min(strainTime, 375.0));
 
-            double strain = 100.0 / strainTime;
+            double strain = Math.Pow(75.0 / strainTime, 1.5);
 
             if (Previous.Count > 0)
             {
@@ -47,7 +47,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty.Skills
             if (repeatStrainCount % 2.0 == 0)
                 return 0;
             else
-                return strain / Math.Pow(1.25, repeatStrainCount);
+                return strain / Math.Pow(1.15, repeatStrainCount);
         }
     }
 }

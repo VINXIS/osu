@@ -32,8 +32,8 @@ namespace osu.Game.Rulesets.Osu.Difficulty
         private int countMeh;
         private int countMiss;
         private const double combo_weight = 0.5;
-        private const double aim_pp_factor = 1.3f;
-        private const double speed_pp_factor = 2.0f;
+        private const double aim_pp_factor = 1.5f;
+        private const double speed_pp_factor = 1.5f;
         private const double total_factor = 1.1f;
 
         public OsuPerformanceCalculator(Ruleset ruleset, WorkingBeatmap beatmap, ScoreInfo score)
@@ -62,13 +62,15 @@ namespace osu.Game.Rulesets.Osu.Difficulty
                 return 0;
 
             // Custom multipliers for NoFail and SpunOut.
-            double multiplier = 1.2f; // This is being adjusted to keep the final pp value scaled around what it used to be when changing things
+            double aim_multiplier = 1.07f;
+            double speed_multiplier = 1.0f;
+            double total_multiplier = 1.2f; // This is being adjusted to keep the final pp value scaled around what it used to be when changing things
 
             if (mods.Any(m => m is OsuModNoFail))
-                multiplier *= 0.90f;
+                total_multiplier *= 0.90f;
 
             if (mods.Any(m => m is OsuModSpunOut))
-                multiplier *= 0.95f;
+                total_multiplier *= 0.95f;
 
             double jumpAimValue = computeJumpAimValue(categoryRatings);
             double streamAimValue = computeStreamAimValue(categoryRatings);
@@ -78,11 +80,11 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             double fingerControlValue = computeFingerControlValue(categoryRatings);
             double accuracyValue = computeAccuracyValue(categoryRatings);
 
-            double totalAimValue = Math.Pow(
+            double totalAimValue = aim_multiplier * Math.Pow(
                 Math.Pow(jumpAimValue, aim_pp_factor) + 
                 Math.Pow(streamAimValue, aim_pp_factor) + 
                 Math.Pow(aimControlValue, aim_pp_factor), 1.0f / aim_pp_factor);
-            double totalSpeedValue = Math.Pow(
+            double totalSpeedValue = speed_multiplier * Math.Pow(
                 Math.Pow(staminaValue, speed_pp_factor) + 
                 Math.Pow(speedValue, speed_pp_factor) + 
                 Math.Pow(fingerControlValue, speed_pp_factor), 1.0f / speed_pp_factor);
@@ -101,7 +103,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
                 totalAimValue *= modBonus;
             }
 
-            double totalValue = multiplier * Math.Pow(
+            double totalValue = total_multiplier * Math.Pow(
                 Math.Pow(totalAimValue, total_factor) + 
                 Math.Pow(totalSpeedValue, total_factor) +
                 Math.Pow(accuracyValue, total_factor), 1.0f / total_factor);
@@ -394,9 +396,6 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             double accMultiplier = 1200.0f;
             double accScale = 1.3f;
 
-            double circleAccuracy = 0;
-            if (countHitCircles > 0) circleAccuracy = Math.Max(0.0f, 1.0f - (1.0f - accuracy) * totalHits / countHitCircles);
-
             // Slider sigma calculations
             if (countSliders > 0)
             {
@@ -409,7 +408,7 @@ namespace osu.Game.Rulesets.Osu.Difficulty
             if (countHitCircles > 0)
             {
                 double circleConst = Math.Sqrt(2.0f / countHitCircles) * zScore;
-                double circleProbability = (2.0f * circleAccuracy + Math.Pow(circleConst, 2.0f) - circleConst * Math.Sqrt(4.0f * circleAccuracy + Math.Pow(circleConst, 2.0f) - 4.0f * Math.Pow(circleAccuracy, 2.0f))) / (2.0f  + 2.0f * Math.Pow(circleConst, 2.0f));
+                double circleProbability = (2.0f * accuracy + Math.Pow(circleConst, 2.0f) - circleConst * Math.Sqrt(4.0f * accuracy + Math.Pow(circleConst, 2.0f) - 4.0f * Math.Pow(accuracy, 2.0f))) / (2.0f  + 2.0f * Math.Pow(circleConst, 2.0f));
                 sigmaCircle = (79.5f - 6.0f * Attributes.OverallDifficulty) / (sqrt2 * SpecialFunctions.ErfInv(circleProbability));
             }
 
